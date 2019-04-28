@@ -1,7 +1,7 @@
 package java2scala.keywords
 
 
-sealed abstract class Token(val value: String, val line: Int)
+sealed abstract class Token(val value: String, val line: Int = 0)
 
 case class ClassToken(override val line: Int) extends Token("class", line = line)
 
