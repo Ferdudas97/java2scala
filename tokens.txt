@@ -6,7 +6,6 @@ CATCH:              'catch';
 CHAR:               'char';
 CLASS:              'class';
 CONTINUE:           'continue';
-DEFAULT:            'default';
 DO:                 'do';
 DOUBLE:             'double';
 ELSE:               'else';
@@ -40,10 +39,9 @@ VOID:               'void';
 WHILE:              'while';
 
 
-DECIMAL_LITERAL:    ('0' | [1-9] (Digits? | '_'+ Digits)) [lL]?;
+DECIMAL_LITERAL:    ('0' | [1-9] (Digits?));
 
-FLOAT_LITERAL:      (Digits '.' Digits? | '.' Digits) ExponentPart? [fFdD]?
-             |       Digits (ExponentPart [fFdD]? | [fFdD])
+FLOAT_LITERAL:      (Digits '.' Digits? | '.' Digits)?
              ;
 
 BOOL_LITERAL:       'true'
@@ -87,7 +85,7 @@ BITOR:              '|';
 CARET:              '^';
 MOD:                '%';
 ELLIPSIS:           '...';
-WS:                 [ \t\r\n\u000C]+ -> channel(HIDDEN);
+WS:                 [ \t\r\n]+ -> channel(HIDDEN);
 COMMENT:            '/*' .*? '*/'    -> channel(HIDDEN);
 LINE_COMMENT:       '//' ~[\r\n]*    -> channel(HIDDEN);
 
@@ -98,9 +96,6 @@ IDENTIFIER:         Letter LetterOrDigit*;
 
 fragment EscapeSequence
     : '\\' [btnfr"'\\]
-    | '\\' ([0-3]? [0-7])? [0-7]
-    | '\\' 'u'+ HexDigit HexDigit HexDigit HexDigit
-    ;
     ;
 fragment Digits
     : [0-9] ([0-9_]* [0-9])?

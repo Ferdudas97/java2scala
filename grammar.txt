@@ -204,14 +204,10 @@ literal
 
 integerLiteral
     : DECIMAL_LITERAL
-    | HEX_LITERAL
-    | OCT_LITERAL
-    | BINARY_LITERAL
     ;
 
 floatLiteral
     : FLOAT_LITERAL
-    | HEX_FLOAT_LITERAL
     ;
 
 
@@ -245,9 +241,9 @@ statement
     | WHILE parExpression statement
     | DO statement WHILE parExpression ';'
     | TRY block (catchClause+ finallyBlock? | finallyBlock)
-    | TRY resourceSpecification block catchClause* finallyBlock?
+    | TRY resourceSpecification block catchClause*
     | SWITCH parExpression '{' switchBlockStatementGroup* switchLabel* '}'
-    | SYNCHRONIZED parExpression block
+    | parExpression block
     | RETURN expression? ';'
     | THROW expression ';'
     | BREAK IDENTIFIER? ';'
@@ -265,9 +261,6 @@ catchType
     : qualifiedName ('|' qualifiedName)*
     ;
 
-finallyBlock
-    : FINALLY block
-    ;
 
 resourceSpecification
     : '(' resources ';'? ')'
@@ -344,8 +337,8 @@ expression
     | expression bop=INSTANCEOF typeType
     | expression bop=('==' | '!=') expression
     | expression bop='^' expression
-    | expression AND expression
-    | expression OR expression
+    | expression bop = (AND) expression
+    | expression bop=(OR) expression
 
 primary
     : '(' expression ')'
