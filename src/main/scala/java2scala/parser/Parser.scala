@@ -17,13 +17,13 @@ class Parser(tokens: List[Token]) {
   }
 
 
-  def advance() = currentToken = queue.dequeue()
+  private[parser] def advance() = currentToken = queue.dequeue()
 
-  def eat(typ: TokenType) = if (currentToken is typ)
+  private[parser] def eat(typ: TokenType) = if (currentToken is typ)
     advance()
   else throw new NoSuchElementException(s" token ${currentToken.typ} typ ${typ}")
 
-  def peekToken() = queue.front
+  private[parser] def peekToken() = queue.front
 
 
   /*
@@ -31,7 +31,7 @@ class Parser(tokens: List[Token]) {
      : packageDeclaration? importDeclaration* typeDeclaration* EOF
      ;
       */
-  def compilationUnit() = {
+  private[parser] def compilationUnit() = {
     val packgeDeclaration = packageDeclaration()
     val importDeclarations = zeroOrMore(() => {
       currentToken is IMPORT
@@ -46,7 +46,7 @@ class Parser(tokens: List[Token]) {
     : PACKAGE qualifiedName ';'
     ;
    */
-  def packageDeclaration() = {
+  private[parser] def packageDeclaration() = {
     eat(PACKAGE)
     val name = qualifedName()
     eat(SEMICOLON)
@@ -58,7 +58,7 @@ class Parser(tokens: List[Token]) {
     : IMPORT  qualifiedName ('.' '*')? ';'
     ;
    */
-  def importDeclaration() = {
+  private[parser] def importDeclaration() = {
     eat(IMPORT)
     val name = qualifedName()
     eat(SEMICOLON)
@@ -66,7 +66,7 @@ class Parser(tokens: List[Token]) {
   }
 
 
-  private def typeDeclaration(): Unit = {
+  private[parser] def typeDeclaration(): Unit = {
     val modifiers = zeroOrMore(() => {
       currentToken.isInstanceOf[Modifier]
     },
@@ -92,7 +92,7 @@ class Parser(tokens: List[Token]) {
     val body = classBody()
   }
 
-  def classBody() = {
+  private[parser] def classBody() = {
     eat(LBRACKET)
     val body = zeroOrMore(() => !(currentToken is RBRACKET)
       , classBodyDeclaration)
@@ -106,36 +106,66 @@ classBodyDeclaration
     | modifier* memberDeclaration
     ;
    */
-  def classBodyDeclaration() = {
+  private[parser] def classBodyDeclaration() = {
     val modifier = classOrIterfaceDelarationModifier()
 
   }
 
+
   /*
-  memberDeclaration
-    : methodDeclaration
-    | fieldDeclaration
-    | constructorDeclaration
-    | interfaceDeclaration
-    | classDeclaration
-    | enumDeclaration
-    ;
-   */
-  def memberDeclaration() = {
+      memberDeclaration
+        : methodDeclaration
+        | fieldDeclaration
+        | constructorDeclaration
+        | interfaceDeclaration
+        | classDeclaration
+        | enumDeclaration
+        ;
+       */
+  private[parser] def memberDeclaration() = {
+
+    currentToken match {
+      case _: IdToken => ConstructorDeclaration()
+      case _ => methodOrFieldDeclaration()
+    }
+    val tov = typeOrVoid
+  }
+
+  private[parser] def methodOrFieldDeclaration() = {
+    val name = identifier()
 
   }
+
+
+  private[parser] def formalParameters() = {
+    eat(LPAREN)
+    val list = formalParameterList()
+    eat(RPAREN)
+  }
+
+  private[parser] def formalParameterList() = {
+
+  }
+
+  private[parser] def ConstructorDeclaration() = {
+    val name = identifier()
+
+  }
+
 
   /*typeTypeOrVoid
     : typeType
   | VOID
   ;
   */
-  def typeOrVoid = {
+  private[parser] def typeOrVoid = {
     val node = currentToken
-    node match {
-      case _:VoidToken  => eat(VOID)
-      case _ => typeType()
+    val typ: Either[VoidToken, TypeType] = node match {
+      case v: VoidToken => eat(VOID); Left(v)
+      case _ => Right(typeType())
     }
+    TypeOrVoid(typ)
+
   }
 
   /*
@@ -143,12 +173,22 @@ classBodyDeclaration
     : (classOrInterfaceType | primitiveType) ('[' ']')*
     ;
    */
-  def  typeType() = {
+  private[parser] def typeType() = {
     val node = currentToken
-    node match {
-      case _:PrimitiveType => primitiveType()
+    val typ = node match {
+      case _: PrimitiveType => primitiveType()
       case _ => classOrInterfaceType()
     }
+
+    val braceNumber = zeroOrMore(() => currentToken is LBRACE,
+      () => {
+        eat(LBRACE)
+        eat(RBRACET)
+        1
+      }
+    ).size
+
+    TypeType(typ, braceNumber)
 
   }
 
@@ -158,7 +198,7 @@ classBodyDeclaration
     ;
    */
 
-  def classOrInterfaceType() = {
+  private[parser] def classOrInterfaceType() = {
     var names = identifier() :: Nil
     names = names ::: zeroOrMore(() => currentToken is COLON, () => {
       eat(COLON)
@@ -167,17 +207,18 @@ classBodyDeclaration
     ClassOrInterfaceType(names)
   }
 
-  def primitiveType() = {
+  private[parser] def primitiveType() = {
     val node = currentToken.asInstanceOf[PrimitiveType]
     node match {
-      case _:BooleanToken => eat(BOOLEAN)
-      case _ :IntToken => eat(INT)
-      case _:ShortToken => eat(SHORT)
-      case _:DoubleToken => eat(DOUBLE)
-      case _:CharToken => eat(CHAR)
+      case _: BooleanToken => eat(BOOLEAN)
+      case _: IntToken => eat(INT)
+      case _: ShortToken => eat(SHORT)
+      case _: DoubleToken => eat(DOUBLE)
+      case _: CharToken => eat(CHAR)
     }
     node
   }
+
   /*
 qualifiedName
   : IDENTIFIER ('.' IDENTIFIER)*
@@ -185,7 +226,7 @@ qualifiedName
 */
 
 
-  private def qualifedName(string: String = ""): QualifiedName = {
+  private[parser] def qualifedName(string: String = ""): QualifiedName = {
     var names = identifier() :: Nil
     names = names ::: zeroOrMore(() => currentToken is COLON, () => {
       eat(COLON)
@@ -194,12 +235,12 @@ qualifiedName
     QualifiedName(names)
   }
 
-  def zeroOrMore[Type](condition: () => Boolean, parseFunction: () => Type): List[Type] = {
+  private[parser] def zeroOrMore[Type](condition: () => Boolean, parseFunction: () => Type): List[Type] = {
     if (condition()) parseFunction() :: zeroOrMore(condition, parseFunction) else Nil
 
   }
 
-  def identifier(): IdToken = {
+  private[parser] def identifier(): IdToken = {
     val node = currentToken
     eat(ID)
     node.asInstanceOf[IdToken]

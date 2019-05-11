@@ -1,5 +1,6 @@
 package java2scala.keywords
 
+import java2scala.ast.{TOV, Type, TypeType}
 import java2scala.keywords.TokenType.TokenType
 
 
@@ -9,7 +10,7 @@ sealed abstract class Token(val value: String,val typ :TokenType ){
 
 sealed trait Modifier extends Token
 
-sealed trait PrimitiveType extends Token
+sealed trait PrimitiveType extends Token with Type
 
 case class ClassToken() extends Token("class",TokenType.CLASS)
 
