@@ -1,8 +1,12 @@
 package java2scala.keywords
 
-object KeyWords extends Enumeration {
-  type KeyWords = Value
-  val ABSTRACT, CONTINUE, FOR,
+object TokenType extends Enumeration {
+
+  type TokenType = Value
+  val ABSTRACT,
+  CONTINUE,
+  FOR,
+  CLASS,
   NEW,
   SWITCH,
   IF,
@@ -31,7 +35,14 @@ object KeyWords extends Enumeration {
 
   NUMBER,
   FLOAT_NUMBER,
-
+  INT,
+  POWER,
+  MINUS,
+  PLUS,
+  MULTIPLY,
+  DIV,
+  MOD,
+  IMPORT,
   ID,
   LT,
   GT,
@@ -40,21 +51,27 @@ object KeyWords extends Enumeration {
   EQ,
   NEQ,
   NOT,
+  AND,
+  OR,
+  ASSIGN,
+  NOTOKEN,
+  STRING,
+  QUOTATION,
+
+
 
   COMMA,
   SEMICOLON,
   COLON,
+
+
 
   LPAREN,
   RPAREN,
   LBRACE,
   RBRACET,
   LBRACKET,
-  RBRACKET = Value
-  val keywords = Map("abstract" -> ABSTRACT,
-    "new" -> NEW,
-  "switch" -> SWITCH,
-    "if"-> IF,
-  )
+  RBRACKET = Value;
+
 }
 

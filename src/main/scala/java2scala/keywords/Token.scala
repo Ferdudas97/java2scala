@@ -1,123 +1,132 @@
 package java2scala.keywords
 
-
-sealed abstract class Token(val value: String, val line: Int = 0)
-
-case class ClassToken(override val line: Int) extends Token("class", line = line)
-
-case class AbstractToken(override val line: Int) extends Token("abstract", line = line)
-
-case class ContinueToken(override val line: Int) extends Token("continue", line = line)
-
-case class ForToken(override val line: Int) extends Token("for", line)
-
-case class DoToken(override val line: Int) extends Token("do", line)
-
-case class NewToken(override val line: Int) extends Token("new", line)
-
-case class SwitchToken(override val line: Int) extends Token("switch", line)
-
-case class PackageToken(override val line: Int) extends Token("package", line)
-
-case class BooleanToken(override val line: Int) extends Token("boolean", line)
-
-case class PrivateToken(override val line: Int) extends Token("private", line)
-
-case class ThisToken(override val line: Int) extends Token("this", line)
-
-case class BreakToken(override val line: Int) extends Token("break", line)
-
-case class DoubleToken(override val line: Int) extends Token("double", line)
-
-case class ProtectedToken(override val line: Int) extends Token("protected", line)
-
-case class ByteToken(override val line: Int) extends Token("byte", line)
-
-case class IfToken(override val line: Int) extends Token("if", line)
-
-case class ElseToken(override val line: Int) extends Token("else", line)
-
-case class CaseToken(override val line: Int) extends Token("case", line)
-
-case class EnumToken(override val line: Int) extends Token("enum", line)
-
-case class ReturnToken(override val line: Int) extends Token("return", line)
-
-case class SuperToken(override val line: Int) extends Token("super", line)
-
-case class PublicToken(override val line: Int) extends Token("public", line)
-
-case class CharToken(override val line: Int) extends Token("char", line)
-
-case class IntToken(override val line: Int) extends Token("int", line = line)
-
-case class ShortToken(override val line: Int) extends Token("short", line)
-
-case class VoidToken(override val line: Int) extends Token("void", line)
-
-case class FinalToken(override val line: Int) extends Token("final", line)
-
-case class WhileToken(override val line: Int) extends Token("while", line)
-
-case class AndToken(override val line: Int) extends Token("and", line)
-
-case class OrToken(override val line: Int) extends Token("or", line)
+import java2scala.keywords.TokenType.TokenType
 
 
-case class PlusToken(override val line: Int) extends Token("+", line)
+sealed abstract class Token(val value: String,val typ :TokenType ){
+  def is(tokenType: TokenType): Boolean = this.typ == tokenType;
+}
 
-case class MinusToken(override val line: Int) extends Token("-", line)
+sealed trait Modifier extends Token
 
-case class DivToken(override val line: Int) extends Token("/", line)
+sealed trait PrimitiveType extends Token
 
-case class MultiplyToken(override val line: Int) extends Token("*", line)
+case class ClassToken() extends Token("class",TokenType.CLASS)
 
-case class PowToken(override val line: Int) extends Token("^", line)
+case class AbstractToken() extends Modifier("abstract",TokenType.ABSTRACT)
+
+case class ContinueToken() extends Token("continue",TokenType.CONTINUE)
+
+case class ForToken() extends Token("for", TokenType.FOR)
+
+case class DoToken() extends Token("do",TokenType.DO)
+
+case class NewToken() extends Token("new", TokenType.NEW)
+
+case class SwitchToken() extends Token("switch", TokenType.SWITCH)
+
+case class PackageToken() extends Token("package", TokenType.PACKAGE)
+
+case class ImportToken() extends Token("import", TokenType.IMPORT)
+
+case class BooleanToken() extends PrimitiveType("boolean", TokenType.BOOLEAN)
+
+case class PrivateToken() extends Modifier("private", TokenType.PRIVATE)
+
+case class ThisToken() extends Token("this", TokenType.THIS)
+
+case class BreakToken() extends Token("break", TokenType.BREAK)
+
+case class DoubleToken() extends PrimitiveType("double", TokenType.DOUBLE)
+
+case class ProtectedToken() extends Modifier("protected", TokenType.PROTECTED)
+
+case class ByteToken() extends PrimitiveType("byte", TokenType.BYTE)
+
+case class IfToken() extends Token("if", TokenType.IF)
+
+case class ElseToken() extends Token("else", TokenType.ELSE)
+
+case class CaseToken() extends Token("case",TokenType.CASE)
+
+case class EnumToken() extends Token("enum", TokenType.ENUM)
+
+case class ReturnToken() extends Token("return", TokenType.RETURN)
+
+case class SuperToken() extends Token("super", TokenType.SUPER)
+
+case class PublicToken() extends Token("public", TokenType.PUBLIC)
+
+case class CharToken() extends PrimitiveType("char", TokenType.CHAR)
+
+case class IntToken() extends Token("int", TokenType.INT)
+
+case class ShortToken() extends PrimitiveType("short", TokenType.SHORT)
+
+case class VoidToken() extends Token("void",TokenType.VOID)
+
+case class FinalToken() extends Modifier("final", TokenType.FINAL)
+
+case class WhileToken() extends Token("while", TokenType.WHILE)
+
+case class AndToken() extends Token("and", TokenType.AND)
+
+case class OrToken() extends Token("or", TokenType.OR)
 
 
-case class AssignToken(override val line: Int) extends Token("=", line)
+case class PlusToken() extends Token("+", TokenType.PLUS)
 
-case class LtToken(override val line: Int) extends Token("<", line)
+case class MinusToken() extends Token("-", TokenType.MINUS)
 
-case class LteToken(override val line: Int) extends Token("<=", line)
+case class DivToken() extends Token("/", TokenType.DIV)
 
-case class GtToken(override val line: Int) extends Token(">", line)
+case class MultiplyToken() extends Token("*",TokenType.MULTIPLY)
 
-case class GteToken(override val line: Int) extends Token(">=", line)
-
-case class EqToken(override val line: Int) extends Token("==", line)
-
-case class NeqToken(override val line: Int) extends Token("!=", line)
-
-case class NotToken(override val line: Int) extends Token("!", line)
+case class PowToken() extends Token("^", TokenType.POWER)
 
 
-case class CommaToken(override val line: Int) extends Token(",", line)
+case class AssignToken() extends Token("=", TokenType.ASSIGN)
 
-case class SemicolonToken(override val line: Int) extends Token(";", line)
+case class LtToken() extends Token("<", TokenType.LT)
 
-case class ColonToken(override val line: Int) extends Token(".", line)
+case class LteToken() extends Token("<=", TokenType.LTE)
 
-case class QuotationToken(override val line: Int) extends Token("\"", line)
+case class GtToken() extends Token(">", TokenType.GT)
 
-case class LParenToken(override val line: Int) extends Token("(", line)
+case class GteToken() extends Token(">=", TokenType.GTE)
 
-case class RParenToken(override val line: Int) extends Token(")", line)
+case class EqToken() extends Token("==", TokenType.EQ)
 
-case class LBraceToken(override val line: Int) extends Token("[", line)
+case class NeqToken() extends Token("!=", TokenType.NEQ)
 
-case class RBraceToken(override val line: Int) extends Token("]", line)
+case class NotToken() extends Token("!", TokenType.NOT)
 
-case class LBracketToken(override val line: Int) extends Token("{", line)
+case class CommaToken() extends Token(",", TokenType.COMMA)
 
-case class RBracketToken(override val line: Int) extends Token("}", line)
+case class SemicolonToken() extends Token(";",TokenType.SEMICOLON)
 
-case class NumberToken(override val value: String, override val line: Int) extends Token(value, line)
+case class ColonToken() extends Token(".",TokenType.COLON)
 
-case class FloatNumberToken(override val value: String, override val line: Int) extends Token(value, line)
+case class QuotationToken() extends Token("\"",TokenType.QUOTATION)
 
-case class IdToken(override val value: String, override val line: Int) extends Token(value, line)
+case class LParenToken() extends Token("(", TokenType.LPAREN)
 
-case class NoToken(override val line: Int) extends Token(" ", line)
+case class RParenToken() extends Token(")",TokenType.RPAREN)
 
-case class StringToken(override val value: String, override val line: Int) extends Token(value, line)
+case class LBraceToken() extends Token("[",TokenType.LBRACE)
+
+case class RBraceToken() extends Token("]",TokenType.RBRACET)
+
+case class LBracketToken() extends Token("{",TokenType.LBRACKET)
+
+case class RBracketToken() extends Token("}",TokenType.RBRACET)
+
+case class NumberToken(override val value: String) extends Token(value,TokenType.NUMBER)
+
+case class FloatNumberToken(override val value: String) extends Token(value,TokenType.FLOAT_NUMBER)
+
+case class IdToken(override val value: String) extends Token(value, TokenType.ID)
+
+case class NoToken() extends Token(" ", TokenType.NOTOKEN)
+
+case class StringToken(override val value: String) extends Token(value,TokenType.STRING)
