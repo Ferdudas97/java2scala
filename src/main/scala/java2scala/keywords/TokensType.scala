@@ -33,6 +33,7 @@ object TokenType extends Enumeration {
   FINAL,
   WHILE,
 
+  LITERAL,
   NUMBER,
   FLOAT_NUMBER,
   INT,

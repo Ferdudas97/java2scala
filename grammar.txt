@@ -233,13 +233,11 @@ localTypeDeclaration
     ;
 
 statement
-    : blockLabel=block
-    | ASSERT expression (':' expression)? ';'
-    | IF parExpression statement (ELSE statement)?
+    : IF parExpression statement (ELSE statement)?
     | FOR '(' forControl ')' statement
     | WHILE parExpression statement
     | DO statement WHILE parExpression ';'
-    | TRY block (catchClause+ finallyBlock? | finallyBlock)
+    | TRY block (catchClause+)
     | TRY resourceSpecification block catchClause*
     | SWITCH parExpression '{' switchBlockStatementGroup* switchLabel* '}'
     | parExpression block
@@ -326,7 +324,6 @@ expression
     | methodCall
     | NEW creator
     | '(' typeType ')' expression
-    | expression postfix=('++' | '--')
     | prefix=('+'|'-') expression
     | prefix=('!') expression
     | expression bop=('*'|'/'|'%') expression
