@@ -247,7 +247,6 @@ statement
     | CONTINUE IDENTIFIER? ';'
     | SEMI
     | statementExpression=expression ';'
-    | identifierLabel=IDENTIFIER ':' statement
     ;
 
 catchClause

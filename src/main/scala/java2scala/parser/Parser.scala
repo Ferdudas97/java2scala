@@ -6,24 +6,31 @@ import java2scala.keywords._
 
 import scala.collection.mutable
 
-class Parser(tokens: List[Token]) {
+class Parser(var tokens: List[Token]) {
 
   var index = 0
   private val queue: mutable.Queue[Token] = mutable.Queue(tokens: _*)
-  var currentToken: Token = queue.dequeue()
+  var currentToken: Token = _
+  var className: String = ""
+
+  var counter = 0
+  advance()
 
   def parse(tokens: List[Token]) = {
     compilationUnit()
   }
 
 
-  private[parser] def advance() = currentToken = if (queue.nonEmpty) queue.dequeue() else NoToken()
+  private[parser] def advance(): Unit = if (tokens.nonEmpty) {
+    currentToken = tokens.head
+    tokens = tokens.tail
+  } else NoToken()
 
   private[parser] def eat(typ: TokenType) = if (currentToken is typ)
     advance()
   else throw new NoSuchElementException(s" token ${currentToken.typ} typ ${typ}")
 
-  private[parser] def peekToken() = queue.front
+  private[parser] def peekToken(i: Int = 0) = tokens(i)
 
   private def is(types: TokenType*): Boolean = types.exists(is)
 
@@ -75,8 +82,8 @@ class Parser(tokens: List[Token]) {
       currentToken.isInstanceOf[Modifier]
     },
       classOrIterfaceDelarationModifier)
-    zeroOrOne(() => is(CLASS), classDeclaration)
-    null
+    zeroOrOne(() => is(CLASS), () => classDeclaration(modifiers)).get
+
   }
 
   private def classOrIterfaceDelarationModifier() = {
@@ -92,18 +99,20 @@ class Parser(tokens: List[Token]) {
   }
 
 
-  private def classDeclaration(): ClassDeclaration = {
+  private def classDeclaration(modifier: List[ClassOrInterfaceModifier]): ClassDeclaration = {
     eat(CLASS)
     val name = identifier()
+    className = name.value
     val body = classBody()
-    null
+    ClassDeclaration(modifier, name, body)
   }
 
   private[parser] def classBody() = {
     eat(LBRACKET)
-    val body = zeroOrMore(() => !(currentToken is RBRACKET)
-      , classBodyDeclaration)
+    if (is(SEMICOLON)) eat(SEMICOLON)
+    val body = zeroOrMore(() => !is(RBRACKET, SEMICOLON), classMemberDeclaration)
     eat(RBRACKET)
+    body
   }
 
   /*
@@ -113,9 +122,10 @@ classBodyDeclaration
     | modifier* memberDeclaration
     ;
    */
-  private[parser] def classBodyDeclaration() = {
+  private[parser] def classMemberDeclaration(): ClassMemberDeclaration = {
     val modifier = classOrIterfaceDelarationModifier()
-    val member = memberDeclaration()
+    memberDeclaration(modifier)
+
   }
 
 
@@ -129,47 +139,55 @@ classBodyDeclaration
         | enumDeclaration
         ;
        */
-  private[parser] def memberDeclaration() = {
+  private[parser] def memberDeclaration(modifier: ClassOrInterfaceModifier): ClassMemberDeclaration = {
 
-    currentToken match {
-      case _: IdToken => ConstructorDeclaration()
-      case _ => methodOrFieldDeclaration()
+    if (currentToken.value == className) constructorDeclaration(modifier)
+    else methodOrFieldDeclaration(modifier)
+  }
+
+  private[parser] def methodOrFieldDeclaration(modifier: ClassOrInterfaceModifier): ClassMemberDeclaration = {
+    val typ = typeType()
+    val method = zeroOrOne(() => peekToken(0) is LPAREN, () => methodDeclaration(modifier, typ))
+    method match {
+      case None => fieldDeclaration(modifier, typ)
+      case Some(p) => p;
     }
   }
 
-  private[parser] def methodOrFieldDeclaration() = {
-    val typ = typeType()
-    val name = identifier()
-    zeroOrOne(() => is(LPAREN), methodDeclaration)
+  private[parser] def fieldDeclaration(modifier: ClassOrInterfaceModifier, typeType: TypeType): FieldDeclaration = {
+    val declarators = variableDeclarators()
+    eat(SEMICOLON)
+    FieldDeclaration(modifier, typeType, declarators)
   }
 
-
-  private[parser] def methodDeclaration() = {
+  private[parser] def methodDeclaration(modifier: ClassOrInterfaceModifier, typeType: TypeType): MethodDeclaration = {
+    val name = identifier()
     val parameters = formalParameters()
     val body = methodBody()
+    MethodDeclaration(modifier, typeType, name, parameters, body)
   }
 
   private[parser] def methodBody() = {
-    eat(LBRACKET)
-
-    eat(RBRACKET)
+    val methodBlock = block()
+    MethodBody(methodBlock)
   }
 
   private[parser] def formalParameters() = {
     eat(LPAREN)
-    val list = formalParameterList()
+    val list = zeroOrOne(() => !is(RPAREN), formalParameterList)
     eat(RPAREN)
-    FormalParameters(list)
+    FormalParameters(list.getOrElse(List.empty))
   }
 
   private[parser] def formalParameterList() = {
-    val firstArgument = zeroOrOne(() => is(FINAL, ID), formalParameter)
-    firstArgument.map(a => a :: zeroOrMore(() => is(COLON), formalParameter))
-      .getOrElse(Nil)
+    oneOrMore(() => is(COMMA), formalParameter)
   }
 
-  private[parser] def ConstructorDeclaration() = {
+  private[parser] def constructorDeclaration(modifier: ClassOrInterfaceModifier) = {
     val name = identifier()
+    val parameters = formalParameters()
+    val bblock = block()
+    ConstructorDeclaration(modifier, name, parameters, bblock)
 
   }
 
@@ -181,16 +199,74 @@ classBodyDeclaration
 
   }
 
-  private[parser] def block(): Stmt = {
+  private[parser] def block(): Block = {
     eat(LBRACKET)
-    val stmt = blockStatement()
+    val stmt = zeroOrMore(() => !is(RBRACKET), blockStatement)
     eat(RBRACKET)
-    stmt
+    Block(stmt)
   }
 
-  private[parser] def blockStatement(): Stmt = {
-    block()
+  private[parser] def blockStatement(): BlockStatement = {
+    val stmt = zeroOrOne(() => is(FINAL, ID), localVariableDeclaration)
+      .getOrElse(statement())
+    BlockStatement(stmt)
   }
+
+  private[parser] def localVariableDeclaration(): LocalVariableDeclaration = {
+    val isFinal = zeroOrOne(() => is(FINAL), () => {
+      eat(FINAL)
+      FinalToken()
+    })
+    val typ = typeType()
+    val declarators = variableDeclarators()
+    eat(SEMICOLON)
+    LocalVariableDeclaration(isFinal.isDefined, typ, declarators)
+  }
+
+
+  private[parser] def variableDeclarators(): List[VariableDeclarator] = {
+    oneOrMore(() => is(COMMA), variableDeclarator)
+  }
+
+  private[parser] def variableDeclarator(): VariableDeclarator = {
+    val id = variableDeclaratorId()
+    val initializer = zeroOrOne(() => is(ASSIGN), () => {
+      eat(ASSIGN)
+      variableInitializer()
+    })
+    VariableDeclarator(id, initializer)
+  }
+
+  private[parser] def variableInitializer(): VariableInitializer = {
+    val node = currentToken
+
+    val initializer = zeroOrOne(() => is(LBRACE), arrayInitializer)
+
+    initializer.getOrElse(VariableInitializerByExpression(expression()))
+  }
+
+  private[parser] def arrayInitializer(): ArrayInitializer = {
+    eat(LBRACE)
+    val values = zeroOrOne(() => !is(RBRACET), () => {
+      oneOrMore(() => is(COMMA), () => variableInitializer())
+    })
+    eat(RBRACET)
+    ArrayInitializer(values.getOrElse(List.empty))
+
+  }
+
+  private[parser] def variableDeclaratorId() = {
+    val name = identifier()
+    val braceNumber = zeroOrMore(() => is(LBRACE), () => {
+      eat(LBRACE)
+      eat(RBRACET)
+      1
+    }).size
+
+    VariableDeclaratorId(name, braceNumber)
+
+  }
+
 
   def switchStatement(): Stmt = {
     eat(SWITCH)
@@ -274,8 +350,8 @@ classBodyDeclaration
 
   private[parser] def expression3(): Exp = {
     currentToken match {
-      case _:LiteralToken =>primary()
-      case _  => expression()
+      case _: LiteralToken => primary()
+      case _ => expression()
     }
   }
 
@@ -411,6 +487,11 @@ qualifiedName
   = {
     if (condition()) parseFunction() :: zeroOrMore(condition, parseFunction) else Nil
 
+  }
+
+  private[parser] def oneOrMore[Type](condition: () => Boolean, parseFunction: () => Type): List[Type] = {
+
+    parseFunction() :: zeroOrMore(condition, parseFunction)
   }
 
   private[parser] def zeroOrOne[Type](condition: () => Boolean, parseFunction: () => Type): Option[Type]

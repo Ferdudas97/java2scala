@@ -60,13 +60,14 @@ case class ReturnToken() extends Token("return", TokenType.RETURN)
 
 case class SuperToken() extends Token("super", TokenType.SUPER)
 
-case class PublicToken() extends Token("public", TokenType.PUBLIC)
+case class PublicToken() extends Modifier("public", TokenType.PUBLIC)
 
 case class CharToken() extends PrimitiveType("char", TokenType.CHAR)
 
-case class IntToken() extends Token("int", TokenType.INT)
+case class IntToken() extends PrimitiveType("int", TokenType.INT)
 
 case class ShortToken() extends PrimitiveType("short", TokenType.SHORT)
+
 
 case class VoidToken() extends Token("void", TokenType.VOID)
 
@@ -124,7 +125,7 @@ case class RBraceToken() extends Token("]", TokenType.RBRACET)
 
 case class LBracketToken() extends Token("{", TokenType.LBRACKET)
 
-case class RBracketToken() extends Token("}", TokenType.RBRACET)
+case class RBracketToken() extends Token("}", TokenType.RBRACKET)
 
 case class NumberToken(override val value: String) extends LiteralToken(value)
 
@@ -132,7 +133,7 @@ case class FloatNumberToken(override val value: String) extends LiteralToken(val
 
 case class IdToken(override val value: String) extends Token(value, TokenType.ID)
 
-case class NoToken() extends Token(" ", TokenType.NOTOKEN)
+case class NoToken() extends Token("", TokenType.NOTOKEN)
 
 sealed abstract class LiteralToken(override val value: String) extends Token(value, TokenType.LITERAL)
 

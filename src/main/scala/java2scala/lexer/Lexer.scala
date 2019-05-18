@@ -2,28 +2,25 @@ package java2scala.lexer
 
 import java2scala.keywords._
 
-class Lexer {
+object Lexer {
 
 
-  var position = 0
+  def parse(str: String): List[Token] = {
+    parseText(prepareText(str))
+  }
 
-  def parse(text: String): List[Token] = {
+  private def parseText(text: String): List[Token] = {
     val token = readToken(text)
     token match {
-      case Some(value) => value :: parse(prepareText(text, value))
+      case Some(value) => value :: parseText(prepareText(text, value))
       case None => Nil
     }
   }
 
 
-  private def prepareText(text: String, token: Token): String = {
-    val prepared = text.drop(token.value.length)
-      .dropWhile(c => c == ' ')
-    if (prepared.length > 0 && prepared.charAt(0) == '\n') {
-      prepared.substring(1)
-
-    } else prepared
-
+  private def prepareText(text: String, token: Token = NoToken()): String = {
+    text.drop(token.value.length)
+      .dropWhile(c => c.isWhitespace)
   }
 
   private def readToken(text: String) = {
@@ -56,7 +53,7 @@ class Lexer {
         case '/' => DivToken()
         case '*' => MultiplyToken()
         case '^' => PowToken()
-        case '"' => StringToken('"' + readString(text.substring(1)) + '"' )
+        case '"' => StringToken('"' + readString(text.substring(1)) + '"')
         case _ => parseString(text).getOrElse(NoToken())
       }
       Option(token)
@@ -104,7 +101,7 @@ class Lexer {
     case "int" => IntToken()
     case "class" => ClassToken()
     case "import" => ImportToken()
-    case "null"  => NullToken()
+    case "null" => NullToken()
     case "false" => FalseToken()
     case "true" => TrueToken()
     case TokenRegex.isNumber(_*) => NumberToken(string)
