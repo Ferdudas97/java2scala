@@ -11,6 +11,22 @@ class ParserSpec extends FlatSpec with Matchers {
 
   val importDeclaration = ImportDeclaration(QualifiedName(List(IdToken("x"), IdToken("asd"), IdToken("xd"))))
 
+  val constructorDeclaration = ConstructorDeclaration(
+    ClassOrInterfaceModifier(
+      PrivateToken()),
+    IdToken("Ex"),
+    FormalParameters(List(
+      FormalParameter(None,
+        TypeType(ClassOrInterfaceType(
+          List(IdToken("String")))),
+        IdToken("in")))),
+    Block(List(
+      BlockStatement(
+        Assingment(
+          IdToken("test")
+          , IdToken("in"))),
+      BlockStatement(SemicolonToken()))))
+
   val forDeclaration = ForStatement(
     ForControl(ForInit(LocalVariableDeclaration(isFinal = false,
       TypeType(IntToken()),
@@ -51,70 +67,73 @@ class ParserSpec extends FlatSpec with Matchers {
     }
   }
 
-    behave like sectionParse("package lol.xd;", packageDeclaration, p => p.packageDeclaration())
 
-    behave like sectionParse("import x.asd.xd;", importDeclaration, p => p.importDeclaration())
+      behave like sectionParse("package lol.xd;", packageDeclaration, p => p.packageDeclaration())
 
-    behave like sectionParse("5 + 6 == 12", BinOp(IntegerLiteral(5), PlusToken(), BinOp(IntegerLiteral(6), EqToken(), IntegerLiteral(12))), p => p.expression())
+      behave like sectionParse("import x.asd.xd;", importDeclaration, p => p.importDeclaration())
 
-  behave like sectionParse("public int fun(int x){" +
-    "for(int i =0; i<5; i=i+1){}" +
-    "}",
-    funDeclaration,
-    p => p.classMemberDeclaration())
+      behave like sectionParse("5 + 6 == 12", BinOp(IntegerLiteral(5), PlusToken(), BinOp(IntegerLiteral(6), EqToken(), IntegerLiteral(12))), p => p.expression())
 
-
-    behave like sectionParse(
-      """private String test = "lol"; """,
-      fieldDeclaration,
+    behave like sectionParse("public int fun(int x){" +
+      "for(int i =0; i<5; i=i+1){}" +
+      "}",
+      funDeclaration,
       p => p.classMemberDeclaration())
 
-    behave like sectionParse(
-      """package lol.xd;
-        |
-        |import x.asd.xd;
-        |
-        |public class Ex{
-        |
-        |private String test = "lol"
-        |;
-        |public int fun(int x){
-        |for(int i =0; i<5; i=i+1){}
-        |}
-        |}
-      """.stripMargin
-      ,
-      CompilationUnit(packageDeclaration,
-        List(importDeclaration),
-        ClassDeclaration(List(ClassOrInterfaceModifier(PublicToken())),
-          IdToken("Ex"),
-          List(fieldDeclaration, funDeclaration))),
-      p => p.compilationUnit()
-    )
 
-    behave like sectionParse(
-      """switch(x) {
-        |case 5 : 6
-        |}
-      """.stripMargin,
-      SwitchStatement(ParExp(IdToken("x")),
-        List(SwitchGroup(SwitchLabel(Option(IntegerLiteral(5))), BlockStatement(IntegerLiteral(6))))),
-      p => p.switchStatement())
+      behave like sectionParse(
+        """private String test = "lol"; """,
+        fieldDeclaration,
+        p => p.classMemberDeclaration())
+
+  behave like sectionParse(
+    """package lol.xd;
+      |
+      |import x.asd.xd;
+      |
+      |public class Ex{
+      |
+      |private String test = "lol";
+      |private Ex(String in) {
+      |test = in;
+      |}
+      |public int fun(int x){
+      |for(int i =0; i<5; i=i+1){}
+      |}
+      |}
+    """.stripMargin
+    ,
+    CompilationUnit(packageDeclaration,
+      List(importDeclaration),
+      ClassDeclaration(List(ClassOrInterfaceModifier(PublicToken())),
+        IdToken("Ex"),
+        List(fieldDeclaration, constructorDeclaration, funDeclaration))),
+    p => p.compilationUnit()
+  )
+
+      behave like sectionParse(
+        """switch(x) {
+          |case 5 : 6
+          |}
+        """.stripMargin,
+        SwitchStatement(ParExp(IdToken("x")),
+          List(SwitchGroup(SwitchLabel(Option(IntegerLiteral(5))), BlockStatement(IntegerLiteral(6))))),
+        p => p.switchStatement())
 
 
-    behave like sectionParse(
-      "for(int i =0; i<5; i=i+1){}"
-      , forDeclaration
-      , p => p.forStatement()
-    )
+        behave like sectionParse(
+          "for(int i =0; i<5; i=i+1){}"
+          , forDeclaration
+          , p => p.forStatement()
+        )
 
 
-  //
-  //  def fun(): String= {
-  //    Visitator.visit(CompilationUnit(packageDeclaration,
-  //      List(importDeclaration),
-  //      ClassDeclaration(List(ClassOrInterfaceModifier(PublicToken())),
-  //        IdToken("Ex"),
-  //        List(fieldDeclaration, funDeclaration))))
-  //  }
+
+//    def fun(): String= {
+//      Visitator.visit(CompilationUnit(packageDeclaration,
+//        List(importDeclaration),
+//        ClassDeclaration(List(ClassOrInterfaceModifier(PublicToken())),
+//          IdToken("Ex"),
+//          List(fieldDeclaration, funDeclaration))))
+//    }
 }

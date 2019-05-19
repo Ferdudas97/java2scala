@@ -1,6 +1,6 @@
 package java2scala.keywords
 
-import java2scala.ast.{Exp, Type, TypeType}
+import java2scala.ast.{Exp, Stmt, Type, TypeType}
 import java2scala.keywords.TokenType.TokenType
 
 
@@ -111,7 +111,7 @@ case class NotToken() extends Token("!", TokenType.NOT)
 
 case class CommaToken() extends Token(",", TokenType.COMMA)
 
-case class SemicolonToken() extends Token(";", TokenType.SEMICOLON)
+case class SemicolonToken() extends Token(";", TokenType.SEMICOLON) with Stmt
 
 case class ColonToken() extends Token(":", TokenType.COLON)
 

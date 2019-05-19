@@ -208,7 +208,7 @@ classBodyDeclaration
   }
 
   private[parser] def blockStatement(): BlockStatement = {
-    val stmt = zeroOrOne(() => is(FINAL, ID), localVariableDeclaration)
+    val stmt = zeroOrOne(() => is(FINAL, ID) && !peekToken().is(ASSIGN), localVariableDeclaration)
       .getOrElse(statement())
     BlockStatement(stmt)
   }
@@ -349,6 +349,7 @@ classBodyDeclaration
       case _: ForToken => forStatement()
       case _: BreakToken => breakStatement()
       case _: ReturnToken => returnStatement()
+      case s: SemicolonToken => eat(SEMICOLON); s
       case _ => expression()
     }
   }
@@ -382,10 +383,11 @@ classBodyDeclaration
   private[parser] def expression(): Exp = {
     val node = currentToken
     val exp = expression2()
-    zeroOrOne(() => is(ASSIGN), () => {
+    val ass = zeroOrOne(() => is(ASSIGN), () => {
       eat(ASSIGN)
       expression2()
-    }) match {
+    })
+    ass match {
       case Some(e) => Assingment(exp, e)
       case None => exp
     }
