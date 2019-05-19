@@ -66,6 +66,7 @@ object Lexer {
   private def parseString(text: String) = TokenRegex.isNumber.findPrefixMatchOf(text)
     .orElse(TokenRegex.isFloatNumber.findPrefixMatchOf(text))
     .orElse(TokenRegex.isIdentifier.findPrefixMatchOf(text))
+    .orElse(throw new RuntimeException(text))
     .map(r => r toString)
     .map(s => tokenFromString(s))
 

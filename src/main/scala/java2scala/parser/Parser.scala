@@ -50,7 +50,7 @@ class Parser(var tokens: List[Token]) {
     }, () => importDeclaration())
     val typeDec = typeDeclaration()
 
-    CompilationUnit(packgeDeclaration, importDeclarations, typeDec)
+    CompilationUnit(packgeDeclaration, ImportDeclarations(importDeclarations), typeDec)
   }
 
   /*
@@ -208,7 +208,7 @@ classBodyDeclaration
   }
 
   private[parser] def blockStatement(): BlockStatement = {
-    val stmt = zeroOrOne(() => is(FINAL, ID) && !peekToken().is(ASSIGN), localVariableDeclaration)
+    val stmt = zeroOrOne(() => is(FINAL, ID) && !peekToken().is(ASSIGN,), localVariableDeclaration)
       .getOrElse(statement())
     BlockStatement(stmt)
   }

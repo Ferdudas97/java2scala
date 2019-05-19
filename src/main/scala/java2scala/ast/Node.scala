@@ -6,7 +6,8 @@ trait Node
 
 trait Type extends Node
 
-case class CompilationUnit(packageDeclaration: PackageDeclaration, importList: List[ImportDeclaration], typeDeclaration: TypeDeclaration) extends Node
+case class ImportDeclarations(importList: List[ImportDeclaration]) extends Node
+case class CompilationUnit(packageDeclaration: PackageDeclaration, importDeclarations: ImportDeclarations, typeDeclaration: TypeDeclaration) extends Node
 
 
 case class PackageDeclaration(qualifiedName: QualifiedName) extends Node()
