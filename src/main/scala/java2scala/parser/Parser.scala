@@ -1,5 +1,6 @@
 package java2scala.parser
 
+import java2scala.ast
 import java2scala.ast._
 import java2scala.keywords.TokenType.{TokenType, _}
 import java2scala.keywords._
@@ -268,32 +269,74 @@ classBodyDeclaration
   }
 
 
-  def switchStatement(): Stmt = {
+  def switchStatement(): SwitchStatement = {
     eat(SWITCH)
     val condition = parExpression()
     eat(LBRACKET)
-    //switchBlockStatementGroups
+    val groups = zeroOrMore(() => !is(RBRACKET), switchGroup)
     eat(RBRACKET)
-    null
+    SwitchStatement(condition, groups)
   }
 
-  def whileStatement() = {
+  def switchGroup(): SwitchGroup = {
+    val label = switchLabel()
+    val stmt = blockStatement()
+
+    SwitchGroup(label, stmt)
+  }
+
+  def switchLabel(): SwitchLabel = {
+    val exp = zeroOrOne(() => is(CASE), () => {
+      eat(CASE)
+      val exp = expression()
+      eat(COLON)
+      exp
+    })
+    exp match {
+      case Some(_) => SwitchLabel(exp)
+      case None => eat(DEFAULT); eat(COLON); SwitchLabel(None)
+    }
+  }
+
+  def whileStatement(): WhileStatement = {
     eat(WHILE)
     val condition = parExpression()
     val stmt = statement()
     WhileStatement(condition, stmt)
   }
 
-  def breakStatement(): Stmt = {
+  def breakStatement(): BreakStatement = {
     eat(BREAK)
     eat(SEMICOLON)
     BreakStatement()
   }
 
-  def returnStatement(): Stmt = {
+  def returnStatement(): ReturnStatement = {
     eat(RETURN)
     val exp = expression()
     ReturnStatement(exp)
+  }
+
+  def forStatement(): ForStatement = {
+    eat(FOR)
+    eat(LPAREN)
+    val control = forControl()
+    eat(RPAREN)
+    val blockStmt = block()
+    ForStatement(control, blockStmt)
+  }
+
+  def forControl(): ForControl = {
+    val init = forInit()
+    val condition = expression()
+    eat(SEMICOLON)
+    val update = zeroOrMore(() => !is(RPAREN), expression)
+    ForControl(init, condition, update)
+  }
+
+  def forInit(): ForInit = {
+    val dec = localVariableDeclaration()
+    ForInit(dec)
   }
 
   private[parser] def statement(): Stmt = {
@@ -303,9 +346,10 @@ classBodyDeclaration
       case _: IfToken => ifStatement()
       case _: SwitchToken => switchStatement()
       case _: WhileToken => whileStatement()
-      //      case _: ForToken => forStatement()
+      case _: ForToken => forStatement()
       case _: BreakToken => breakStatement()
       case _: ReturnToken => returnStatement()
+      case _ => expression()
     }
   }
 
@@ -320,11 +364,11 @@ classBodyDeclaration
     IfStatement(condition, stm, elseStmt)
   }
 
-  private[parser] def parExpression(): Exp = {
+  private[parser] def parExpression(): ParExp = {
     eat(LPAREN)
     val exp = expression()
     eat(RPAREN)
-    exp
+    ParExp(exp)
   }
 
   //  private[parser]  def expression(): Exp = {
@@ -351,6 +395,7 @@ classBodyDeclaration
   private[parser] def expression3(): Exp = {
     currentToken match {
       case _: LiteralToken => primary()
+      case l: IdToken => eat(ID); l
       case _ => expression()
     }
   }
@@ -443,8 +488,8 @@ classBodyDeclaration
 
   = {
     var names = identifier() :: Nil
-    names = names ::: zeroOrMore(() => is(COLON), () => {
-      eat(COLON)
+    names = names ::: zeroOrMore(() => is(DOT), () => {
+      eat(DOT)
       identifier()
     })
     ClassOrInterfaceType(names)
@@ -475,8 +520,8 @@ qualifiedName
 
   = {
     var names = identifier() :: Nil
-    names = names ::: zeroOrMore(() => is(COLON), () => {
-      eat(COLON)
+    names = names ::: zeroOrMore(() => is(DOT), () => {
+      eat(DOT)
       identifier()
     })
     QualifiedName(names)

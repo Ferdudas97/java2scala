@@ -1,6 +1,6 @@
 package java2scala.keywords
 
-import java2scala.ast.{Type, TypeType}
+import java2scala.ast.{Exp, Type, TypeType}
 import java2scala.keywords.TokenType.TokenType
 
 
@@ -55,6 +55,8 @@ case class ElseToken() extends Token("else", TokenType.ELSE)
 case class CaseToken() extends Token("case", TokenType.CASE)
 
 case class EnumToken() extends Token("enum", TokenType.ENUM)
+
+case class DefaultToken() extends Token("default", TokenType.DEFAULT)
 
 case class ReturnToken() extends Token("return", TokenType.RETURN)
 
@@ -111,7 +113,10 @@ case class CommaToken() extends Token(",", TokenType.COMMA)
 
 case class SemicolonToken() extends Token(";", TokenType.SEMICOLON)
 
-case class ColonToken() extends Token(".", TokenType.COLON)
+case class ColonToken() extends Token(":", TokenType.COLON)
+
+case class DotToken() extends Token(".", TokenType.DOT)
+
 
 case class QuotationToken() extends Token("\"", TokenType.QUOTATION)
 
@@ -131,7 +136,7 @@ case class NumberToken(override val value: String) extends LiteralToken(value)
 
 case class FloatNumberToken(override val value: String) extends LiteralToken(value)
 
-case class IdToken(override val value: String) extends Token(value, TokenType.ID)
+case class IdToken(override val value: String) extends Token(value, TokenType.ID) with Exp
 
 case class NoToken() extends Token("", TokenType.NOTOKEN)
 

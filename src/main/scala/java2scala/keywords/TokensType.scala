@@ -34,6 +34,7 @@ object TokenType extends Enumeration {
   WHILE,
 
   LITERAL,
+  DEFAULT,
   NUMBER,
   FLOAT_NUMBER,
   INT,
@@ -64,6 +65,7 @@ object TokenType extends Enumeration {
   COMMA,
   SEMICOLON,
   COLON,
+  DOT,
 
 
 

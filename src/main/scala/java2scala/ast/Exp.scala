@@ -2,7 +2,7 @@ package java2scala.ast
 
 import java2scala.keywords._
 
-sealed trait Exp extends Node
+trait Exp extends Node with Stmt
 
 
 sealed trait Literal extends Exp
@@ -27,6 +27,8 @@ case class BinOp(left: Exp, token: BinOpToken, right: Exp) extends Exp
 //
 //case class OrOp(override val left: Node, override val token: OrToken, override val right: Node) extends BinOp(left, token, right)
 
+
+case class ParExp(exp: Exp) extends Exp
 
 case class IntegerLiteral(value: Int) extends Literal
 
