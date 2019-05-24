@@ -70,7 +70,10 @@ class ParserSpec extends FlatSpec with Matchers {
   behave like sectionParse(
     """
       |public int fun(int x){
-      |fun(5);
+      |switch(x) {
+      |case 6: "XD";
+      |case 8: "X2";
+      |}
       |}
     """.stripMargin
     ,funDeclaration,

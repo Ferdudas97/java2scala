@@ -30,6 +30,9 @@ case class BinOp(left: Exp, token: BinOpToken, right: Exp) extends Exp
 
 case class ParExp(exp: Exp) extends Exp
 
+case class ExpressionList(exps: List[Exp]) extends Exp
+case class MethodCall(name: IdToken, expressionList: ExpressionList) extends Exp
+
 case class IntegerLiteral(value: Int) extends Literal
 
 case class FloatLiteral(value: Float) extends Literal

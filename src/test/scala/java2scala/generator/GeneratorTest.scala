@@ -23,7 +23,9 @@ class GeneratorTest extends FlatSpec with Matchers{
                      |private int x = 5;
                      |
                      |public int fun(int x) {
-                     | System.out.println(x)
+                     |switch(x) {
+                     |case 6: "XD";
+                     |case 8: "X2";
                      |}
                      |}
                      |""".stripMargin)

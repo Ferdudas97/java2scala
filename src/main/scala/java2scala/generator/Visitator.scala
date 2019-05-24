@@ -34,7 +34,7 @@ object Visitator {
   def visitClass(declaration: ClassDeclaration): String = {
     val modifier = declaration.modifier.map(visit).mkString(" ");
     val name = visit(declaration.name)
-    val  body = declaration.body.map(visit).mkString("{\n","\n","}")
+    val body = declaration.body.map(visit).mkString("{\n", "\n", "}")
     s"$modifier class $name $body "
   }
 
@@ -75,6 +75,7 @@ object Visitator {
       case f: ForStatement => visit(f)
       case r: ReturnStatement => s"return ${visit(r.exp)}"
       case s: SwitchStatement => visit(s)
+      case exp: Exp => visit(exp)
     }
   }
 
@@ -103,7 +104,6 @@ object Visitator {
 
   def visit(control: ForControl): String = {
     val declaration = control.init.localVariableDeclaration
-    //    val i
     ""
   }
 
@@ -137,7 +137,7 @@ object Visitator {
   }
 
   def visitField(fieldDeclaration: FieldDeclaration): String = {
-    visit(fieldDeclaration.modifier) +
+    visitField(fieldDeclaration.modifier) +
       fieldDeclaration.declarators
         .map(d => d.variableDeclaratorId.idToken)
         .map(visit)
@@ -166,6 +166,7 @@ object Visitator {
       case p: BinOp => s"(${visit(p.left)} ${p.token.value} ${visit(p.right)})"
       case l: Literal => visit(l)
       case a: Assingment => s"(${visit(a.exp1)} = ${visit(a.exp2)})"
+      case x: IdToken => s"${x.value} "
     }
   }
 
@@ -214,12 +215,31 @@ object Visitator {
   def visit(idToken: IdToken) = idToken.value + " "
 
   def visit(declaration: ClassOrInterfaceModifier): String = {
-    declaration.modifier match {
-      case mod: PrivateToken => "private "
-      case _: PublicToken => " "
-      case _: AbstractToken => "abstract "
-      case _: FinalToken => "final "
-      case _: ProtectedToken => "protected "
+    declaration.modifier.map(visitMethodOrClassModifier).mkString(" ")
+  }
+  def visitMethodOrClassModifier(modifier: Modifier)= modifier match {
+    case mod: PrivateToken => "private"
+    case _: PublicToken => ""
+    case _: AbstractToken => "abstract"
+    case _: FinalToken => "final"
+    case _: ProtectedToken => "protected"
+  }
+
+  def visitField(declaration: ClassOrInterfaceModifier): String = {
+    val modifiers = declaration.modifier.map(visitFieldModifier).mkString(" ")
+    if (modifiers.contains("val")) {
+      val modified = modifiers.replace("val ","")
+      modified + "val "
+    }
+    else modifiers + "var "
+    }
+
+    def visitFieldModifier(modifier: Modifier) = modifier match {
+      case mod: PrivateToken => "private"
+      case _: PublicToken => ""
+      case _: AbstractToken => "abstract"
+      case _: FinalToken => "val"
+      case _: ProtectedToken => "protected"
     }
   }
 }

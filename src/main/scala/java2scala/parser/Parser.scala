@@ -88,6 +88,11 @@ class Parser(var tokens: List[Token]) {
   }
 
   private def classOrIterfaceDelarationModifier() = {
+    val modifers = zeroOrMore(()=> currentToken.isInstanceOf[Modifier],modifier)
+    ClassOrInterfaceModifier(modifers)
+  }
+
+  private[parser] def modifier(): Modifier = {
     val node = currentToken.asInstanceOf[Modifier]
     node match {
       case _: PrivateToken => eat(PRIVATE)
@@ -95,8 +100,7 @@ class Parser(var tokens: List[Token]) {
       case _: PublicToken => eat(PUBLIC)
       case _: FinalToken => eat(FINAL)
     }
-
-    ClassOrInterfaceModifier(node)
+    node
   }
 
 
@@ -148,7 +152,7 @@ classBodyDeclaration
 
   private[parser] def methodOrFieldDeclaration(modifier: ClassOrInterfaceModifier): ClassMemberDeclaration = {
     val typ = typeType()
-    val method = zeroOrOne(() => peekToken(0) is LPAREN, () => methodDeclaration(modifier, typ))
+    val method = zeroOrOne(() => peekToken() is LPAREN, () => methodDeclaration(modifier, typ))
     method match {
       case None => fieldDeclaration(modifier, typ)
       case Some(p) => p;
@@ -200,6 +204,20 @@ classBodyDeclaration
 
   }
 
+  private[parser] def methodCall(): MethodCall = {
+    val name = identifier()
+    val expressions = expressionList()
+    eat(SEMICOLON)
+    MethodCall(name, expressions)
+  }
+
+  private[parser] def expressionList(): ExpressionList = {
+    eat(LPAREN)
+    val expressions = zeroOrMore(() => !is(RPAREN), expression)
+    eat(RPAREN)
+    ExpressionList(expressions)
+  }
+
   private[parser] def block(): Block = {
     eat(LBRACKET)
     val stmt = zeroOrMore(() => !is(RBRACKET), blockStatement)
@@ -208,7 +226,7 @@ classBodyDeclaration
   }
 
   private[parser] def blockStatement(): BlockStatement = {
-    val stmt = zeroOrOne(() => is(FINAL, ID) && !peekToken().is(ASSIGN,), localVariableDeclaration)
+    val stmt = zeroOrOne(() => is(FINAL, ID) && !peekToken().is(ASSIGN, LPAREN), localVariableDeclaration)
       .getOrElse(statement())
     BlockStatement(stmt)
   }
@@ -278,10 +296,27 @@ classBodyDeclaration
     SwitchStatement(condition, groups)
   }
 
+  private[parser] def creator(): Unit = {
+    eat(NEW)
+    val id = identifier()
+    val parameters = expressionList();
+    eat(SEMICOLON)
+    Creator(id, parameters)
+
+  }
+
+  private[parser] def arguments():
+
+  =
+  {
+    eat(LPAREN)
+
+  }
+
   def switchGroup(): SwitchGroup = {
     val label = switchLabel()
     val stmt = blockStatement()
-
+    eat(SEMICOLON)
     SwitchGroup(label, stmt)
   }
 
@@ -397,7 +432,7 @@ classBodyDeclaration
   private[parser] def expression3(): Exp = {
     currentToken match {
       case _: LiteralToken => primary()
-      case l: IdToken => eat(ID); l
+      case l: IdToken => if (peekToken() is LPAREN) methodCall() else identifier()
       case _ => expression()
     }
   }

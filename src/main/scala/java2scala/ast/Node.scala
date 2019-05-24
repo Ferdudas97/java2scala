@@ -31,9 +31,11 @@ case class ConstructorDeclaration(modifier: ClassOrInterfaceModifier, name: IdTo
 
 case class MethodBody(block: Block) extends Node
 
+case class Creator(idToken: IdToken, expressionList: ExpressionList)
+
 case class ClassBody(fieldsAndMethods: List[ClassMemberDeclaration])
 
-case class ClassOrInterfaceModifier(modifier: Modifier) extends Node
+case class ClassOrInterfaceModifier(modifier: List[Modifier]) extends Node
 
 case class ClassOrInterfaceType(name: List[IdToken]) extends Type
 

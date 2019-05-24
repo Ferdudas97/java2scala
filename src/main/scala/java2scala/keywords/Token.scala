@@ -5,7 +5,8 @@ import java2scala.keywords.TokenType.TokenType
 
 
 sealed abstract class Token(val value: String, val typ: TokenType) {
-  def is(tokenType: TokenType): Boolean = this.typ == tokenType;
+  def is(tokenType: TokenType): Boolean = this.typ == tokenType
+  def is(types: TokenType*): Boolean = types.exists(is)
 }
 
 sealed abstract class Modifier(override val value: String, override val typ: TokenType) extends Token(value, typ)
