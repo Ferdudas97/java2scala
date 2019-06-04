@@ -1,0 +1,6 @@
+package java2scala.in;
+
+public interface ParentInterface {
+
+    String toString(ParentInterface p);
+}

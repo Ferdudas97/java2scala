@@ -80,7 +80,7 @@ case class IntToken() extends PrimitiveType("int", TokenType.PRIMITIVE)
 case class ShortToken() extends PrimitiveType("short", TokenType.PRIMITIVE)
 
 
-case class VoidToken() extends Token("void", TokenType.VOID)
+case class VoidToken() extends PrimitiveType("void", TokenType.PRIMITIVE)
 
 case class FinalToken() extends Modifier("final", TokenType.FINAL) with VariableModifier
 

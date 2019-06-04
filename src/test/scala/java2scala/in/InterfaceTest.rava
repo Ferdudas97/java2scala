@@ -1,0 +1,7 @@
+package java2scala.in;
+
+
+public interface InterfaceTest : ParentInterface {
+
+    void x();
+}

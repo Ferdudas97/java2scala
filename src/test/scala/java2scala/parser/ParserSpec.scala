@@ -107,7 +107,7 @@ class ParserSpec extends FlatSpec with Matchers {
       ImportDeclarations(List(importDeclaration)),
       ClassDeclaration(List(ClassOrInterfaceModifier(List(PublicToken()))),
         IdToken("Ex"),
-        List(fieldDeclaration, constructorDeclaration, funDeclaration))),
+        List(fieldDeclaration, constructorDeclaration, funDeclaration),Nil)),
     p => p.compilationUnit()
   )
 

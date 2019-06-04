@@ -11,11 +11,12 @@ import scala.io.Source
 
 object CodeGenerator extends Observable {
 
+  val fileExtension = ".rava"
 
   def files(string: String): Unit = {
     val d = new File(string)
     if (d.exists && d.isDirectory) {
-      d.listFiles.filter(_.isFile).filter(_.getName.contains(".java")).foreach(generate)
+      d.listFiles.filter(_.isFile).filter(_.getName.contains(fileExtension)).foreach(generate)
       d.listFiles.filter(_.isDirectory).foreach(f => files(f.getPath))
     } else {
       List[File]()
@@ -29,7 +30,7 @@ object CodeGenerator extends Observable {
   }
 
   def generate(file: File): Unit = {
-    val name = file.getPath.replace(".java", "Sc.scala")
+    val name = file.getPath.replace(fileExtension, ".scala")
     val contet = Source.fromFile(file).mkString
     val scalaContent = compile(contet)
     val printer = new PrintWriter(new File(name))

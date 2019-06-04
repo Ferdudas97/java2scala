@@ -81,20 +81,24 @@ class Parser private(var tokens: List[Token]) {
     },
       classOrIterfaceDelarationModifier)
     val classDec = zeroOrOne(() => is(CLASS), () => classDeclaration(modifiers))
-    classDec.getOrElse(interfaceDeclaration)
+    classDec.getOrElse(interfaceDeclaration(modifiers))
   }
 
-  private[parser] def interfaceDeclaration(): InterfaceDeclaration = {
+  private[parser] def interfaceDeclaration(modifiers: List[ClassOrInterfaceModifier]): InterfaceDeclaration = {
+    eat(INTERFACE)
     val name = identifier()
+    val interfaces = zeroOrMore(() => is(COLON), () => eat(COLON), () => is(COMMA), classOrInterfaceType)
     eat(LBRACKET)
-    val members = zeroOrMore(() => is(RBRACKET), interfaceMember)
-    InterfaceDeclaration(name, members)
+    val members = zeroOrMore(() => !is(RBRACKET), interfaceMember)
+    InterfaceDeclaration(modifiers, name, members, interfaces)
   }
 
   private[parser] def interfaceMember(): InterfaceMemberDeclaration = {
+    val typee = typeType()
     val name = identifier()
     val param = formalParameters()
-    InterfaceMemberDeclaration(name, param)
+    eat(SEMICOLON)
+    InterfaceMemberDeclaration(typee, name, param)
   }
 
   private def classOrIterfaceDelarationModifier() = {
@@ -110,6 +114,7 @@ class Parser private(var tokens: List[Token]) {
       case _: PublicToken => eat(PUBLIC)
       case _: FinalToken => eat(FINAL)
       case _: StaticToken => eat(STATIC)
+      case _: OverrideToken => eat(OVERRIDE)
     }
     node
   }
@@ -119,8 +124,9 @@ class Parser private(var tokens: List[Token]) {
     eat(CLASS)
     val name = identifier()
     className = name.value
+    val interfaces = zeroOrMore(() => is(COLON), () => eat(COLON), () => is(COMMA), classOrInterfaceType)
     val body = classBody()
-    ClassDeclaration(modifier, name, body)
+    ClassDeclaration(modifier, name, body, interfaces)
   }
 
   private[parser] def classBody() = {
@@ -218,7 +224,6 @@ classBodyDeclaration
   private[parser] def methodCall(): MethodCall = {
     val name = identifier()
     val expressions = expressionList()
-    eat(SEMICOLON)
     MethodCall(name, expressions)
   }
 
@@ -582,6 +587,13 @@ qualifiedName
   = {
     if (condition()) parseFunction() :: zeroOrMore(condition, parseFunction) else Nil
 
+  }
+
+  private[parser] def zeroOrMore[Type](startCondition: () => Boolean, eatFirst: () => Unit, separatorCondition: () => Boolean, parseFunction: () => Type): List[Type]
+
+  = {
+    zeroOrOne(startCondition, eatFirst).map(_ => parseFunction()).map(value => value :: zeroOrMore(separatorCondition, parseFunction))
+      .getOrElse(List.empty)
   }
 
   private[parser] def oneOrMore[Type](condition: () => Boolean, parseFunction: () => Type): List[Type] = {

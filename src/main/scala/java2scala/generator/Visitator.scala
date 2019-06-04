@@ -14,7 +14,6 @@ object Visitator {
     s"$package_ \n$imports \n$type_"
 
   }
-
   def visit(declarations: ImportDeclarations): String = {
     declarations.importList.map(i => i.qualifiedName.name)
       .map(ids => ids.map(p => p.value).mkString("import ", ".", ""))
@@ -28,16 +27,34 @@ object Visitator {
   def visit(declaration: TypeDeclaration): String = {
     declaration match {
       case clazz: ClassDeclaration => visitClass(clazz)
-      case _ => ""
+      case i: InterfaceDeclaration => visitInterface(i)
     }
   }
 
-  def visitClass(declaration: ClassDeclaration): String = {
-    val modifier = declaration.modifier.map(visit).mkString(" ");
+  def visitInterface(declaration: InterfaceDeclaration): String = {
+
+    val modifier = declaration.modifier.map(visit).mkString(" ")
     val name = visit(declaration.name)
+    val parents = if (declaration.parents.nonEmpty) declaration.parents.map(visit).mkString("extends ", " with ", "") else ""
+    val body = declaration.body.map(visit).mkString("{\n", "\n", "}")
+    s"$modifier trait $name $parents $body"
+  }
+
+  def visit(declaration: InterfaceMemberDeclaration): String = {
+    val typeType = visit(declaration.typeType)
+    val name = declaration.name.value
+    val parameters = visit(declaration.formalParameter)
+    s"def $name $parameters $typeType"
+  }
+
+  def visitClass(declaration: ClassDeclaration): String = {
+    val modifier = declaration.modifier.map(visit).mkString(" ")
+    val name = visit(declaration.name)
+    val parents = declaration.parents.map(visit).mkString("extends ", " with ", "")
     val nonstaticBody = declaration.body.filter(p => !p.modifier.modifier.contains(StaticToken())).map(visit).mkString("{\n", "\n", "}")
     val staticBody = declaration.body.filter(p => p.modifier.modifier.contains(StaticToken())).map(visit).mkString("{\n", "\n", "}")
-    s"""$modifier class $name $nonstaticBody
+
+    s"""$modifier class $name $parents $nonstaticBody
        |object $name $staticBody
      """.stripMargin
   }
@@ -200,7 +217,7 @@ object Visitator {
 
   def visit(exp: Exp): String = {
     exp match {
-      case a : ArrayGet => s"${visit(a.exp1)}({visit(a.exp1)})"
+      case a: ArrayGet => s"${visit(a.exp1)}({visit(a.exp1)})"
       case p: ParExp => s"(${visit(p.exp)})"
       case p: BinOp => visit(p)
       case l: Literal => visit(l)
@@ -270,6 +287,7 @@ object Visitator {
       case _: ShortToken => "Short "
       case _: CharToken => "Char "
       case _: ByteToken => "Byte "
+      case _: VoidToken => "Unit"
       case c: ClassOrInterfaceType => c.name.map(n => n.value).mkString(".")
 
 
@@ -289,6 +307,7 @@ object Visitator {
     case _: FinalToken => "final"
     case _: ProtectedToken => "protected"
     case _: StaticToken => ""
+    case _: OverrideToken => "override"
 
   }
 
