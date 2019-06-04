@@ -7,6 +7,7 @@ trait Node
 trait Type extends Node
 
 case class ImportDeclarations(importList: List[ImportDeclaration]) extends Node
+
 case class CompilationUnit(packageDeclaration: PackageDeclaration, importDeclarations: ImportDeclarations, typeDeclaration: TypeDeclaration) extends Node
 
 
@@ -21,17 +22,20 @@ sealed trait TypeDeclaration extends Node
 
 case class ClassDeclaration(modifier: List[ClassOrInterfaceModifier], name: IdToken, body: List[ClassMemberDeclaration]) extends TypeDeclaration
 
-sealed abstract class ClassMemberDeclaration(modifier: ClassOrInterfaceModifier) extends Node
+case class InterfaceDeclaration(name: IdToken, body: List[InterfaceMemberDeclaration]) extends TypeDeclaration
 
-case class FieldDeclaration(modifier: ClassOrInterfaceModifier, typeType: TypeType, declarators: List[VariableDeclarator]) extends ClassMemberDeclaration(modifier)
+case class InterfaceMemberDeclaration(name: IdToken, formalParameter: FormalParameters)
 
-case class MethodDeclaration(modifier: ClassOrInterfaceModifier, typeType: TypeType, name: IdToken, formalParameters: FormalParameters, body: MethodBody) extends ClassMemberDeclaration(modifier)
+sealed abstract class ClassMemberDeclaration(val modifier: ClassOrInterfaceModifier) extends Node
 
-case class ConstructorDeclaration(modifier: ClassOrInterfaceModifier, name: IdToken, parameters: FormalParameters, block: Block) extends ClassMemberDeclaration(modifier)
+case class FieldDeclaration(override val modifier: ClassOrInterfaceModifier, typeType: TypeType, declarators: List[VariableDeclarator]) extends ClassMemberDeclaration(modifier)
+
+case class MethodDeclaration(override val modifier: ClassOrInterfaceModifier, typeType: TypeType, name: IdToken, formalParameters: FormalParameters, body: MethodBody) extends ClassMemberDeclaration(modifier)
+
+case class ConstructorDeclaration(override val modifier: ClassOrInterfaceModifier, name: IdToken, parameters: FormalParameters, block: Block) extends ClassMemberDeclaration(modifier)
 
 case class MethodBody(block: Block) extends Node
 
-case class Creator(idToken: IdToken, expressionList: ExpressionList)
 
 case class ClassBody(fieldsAndMethods: List[ClassMemberDeclaration])
 

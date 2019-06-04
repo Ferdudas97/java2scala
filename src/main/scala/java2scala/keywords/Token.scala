@@ -19,6 +19,14 @@ sealed abstract class BinOpToken(override val value: String, override val typ: T
 
 case class ClassToken() extends Token("class", TokenType.CLASS)
 
+case class ImplementsToken() extends Token("implements", TokenType.IMPLEMENTS)
+
+case class InterfaceToken() extends Token("interface", TokenType.INTERFACE)
+
+case class ExtendsToken() extends Token("extends", TokenType.EXTENDS)
+
+case class OverrideToken() extends Modifier("override", TokenType.OVERRIDE)
+
 case class AbstractToken() extends Modifier("abstract", TokenType.ABSTRACT)
 
 case class ContinueToken() extends Token("continue", TokenType.CONTINUE)
@@ -35,7 +43,7 @@ case class PackageToken() extends Token("package", TokenType.PACKAGE)
 
 case class ImportToken() extends Token("import", TokenType.IMPORT)
 
-case class BooleanToken() extends PrimitiveType("boolean", TokenType.BOOLEAN)
+case class BooleanToken() extends PrimitiveType("boolean", TokenType.PRIMITIVE)
 
 case class PrivateToken() extends Modifier("private", TokenType.PRIVATE)
 
@@ -43,11 +51,11 @@ case class ThisToken() extends Token("this", TokenType.THIS)
 
 case class BreakToken() extends Token("break", TokenType.BREAK)
 
-case class DoubleToken() extends PrimitiveType("double", TokenType.DOUBLE)
+case class DoubleToken() extends PrimitiveType("double", TokenType.PRIMITIVE)
 
 case class ProtectedToken() extends Modifier("protected", TokenType.PROTECTED)
 
-case class ByteToken() extends PrimitiveType("byte", TokenType.BYTE)
+case class ByteToken() extends PrimitiveType("byte", TokenType.PRIMITIVE)
 
 case class IfToken() extends Token("if", TokenType.IF)
 
@@ -65,16 +73,18 @@ case class SuperToken() extends Token("super", TokenType.SUPER)
 
 case class PublicToken() extends Modifier("public", TokenType.PUBLIC)
 
-case class CharToken() extends PrimitiveType("char", TokenType.CHAR)
+case class CharToken() extends PrimitiveType("char", TokenType.PRIMITIVE)
 
-case class IntToken() extends PrimitiveType("int", TokenType.INT)
+case class IntToken() extends PrimitiveType("int", TokenType.PRIMITIVE)
 
-case class ShortToken() extends PrimitiveType("short", TokenType.SHORT)
+case class ShortToken() extends PrimitiveType("short", TokenType.PRIMITIVE)
 
 
 case class VoidToken() extends Token("void", TokenType.VOID)
 
 case class FinalToken() extends Modifier("final", TokenType.FINAL) with VariableModifier
+
+case class StaticToken() extends Modifier("static", TokenType.STATIC)
 
 case class WhileToken() extends Token("while", TokenType.WHILE)
 
@@ -116,7 +126,7 @@ case class SemicolonToken() extends Token(";", TokenType.SEMICOLON) with Stmt
 
 case class ColonToken() extends Token(":", TokenType.COLON)
 
-case class DotToken() extends Token(".", TokenType.DOT)
+case class DotToken() extends BinOpToken(".", TokenType.DOT)
 
 
 case class QuotationToken() extends Token("\"", TokenType.QUOTATION)

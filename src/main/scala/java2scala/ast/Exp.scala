@@ -27,10 +27,11 @@ case class BinOp(left: Exp, token: BinOpToken, right: Exp) extends Exp
 //
 //case class OrOp(override val left: Node, override val token: OrToken, override val right: Node) extends BinOp(left, token, right)
 
-
+case class ArrayGet(exp1: Exp, exp2: Exp) extends Exp
 case class ParExp(exp: Exp) extends Exp
 
 case class ExpressionList(exps: List[Exp]) extends Exp
+
 case class MethodCall(name: IdToken, expressionList: ExpressionList) extends Exp
 
 case class IntegerLiteral(value: Int) extends Literal
@@ -44,3 +45,7 @@ case class NullLiteral() extends Literal
 case class BooleanLiteral(boolean: Boolean) extends Literal
 
 case class Assingment(exp1: Exp, exp2: Exp) extends Exp
+
+case class Creator(idToken: IdToken, expressionList: ExpressionList) extends Exp
+
+case class NotExp(exp: Exp) extends Exp

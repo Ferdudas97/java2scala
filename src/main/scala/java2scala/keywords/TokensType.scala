@@ -2,6 +2,7 @@ package java2scala.keywords
 
 object TokenType extends Enumeration {
 
+
   type TokenType = Value
   val ABSTRACT,
   CONTINUE,
@@ -31,7 +32,12 @@ object TokenType extends Enumeration {
   SHORT,
   VOID,
   FINAL,
+  STATIC,
+  OVERRIDE,
+  EXTENDS,
+  INTERFACE,
   WHILE,
+  PRIMITIVE,
 
   LITERAL,
   DEFAULT,

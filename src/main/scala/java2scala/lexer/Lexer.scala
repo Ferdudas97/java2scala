@@ -2,7 +2,7 @@ package java2scala.lexer
 
 import java2scala.keywords._
 
-object Lexer {
+object Lexer{
 
 
   def parse(str: String): List[Token] = {
@@ -43,8 +43,8 @@ object Lexer {
         case ')' => RParenToken()
         case '{' => LBracketToken()
         case '}' => RBracketToken()
-        case '(' => LParenToken()
-        case ')' => RParenToken()
+        case '[' => LBraceToken()
+        case ']' => RBraceToken()
         case '>' => if (text.charAt(1) == '=') GteToken() else GtToken()
         case '<' => if (text.charAt(1) == '=') LteToken() else LtToken()
         case '=' => if (text.charAt(1) == '=') EqToken() else AssignToken()
@@ -88,6 +88,8 @@ object Lexer {
     case "break" => BreakToken()
     case "double" => DoubleToken()
     case "protected" => ProtectedToken()
+    case "interface" => InterfaceToken()
+    case "override" => OverrideToken()
     case "byte" => ByteToken()
     case "else" => ElseToken()
     case "case" => CaseToken()
@@ -106,6 +108,7 @@ object Lexer {
     case "null" => NullToken()
     case "false" => FalseToken()
     case "true" => TrueToken()
+    case "static"=> StaticToken()
     case TokenRegex.isNumber(_*) => NumberToken(string)
     case TokenRegex.isFloatNumber(_*) => FloatNumberToken(string)
     case TokenRegex.isIdentifier(_*) => IdToken(string)

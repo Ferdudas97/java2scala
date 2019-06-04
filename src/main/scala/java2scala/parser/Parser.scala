@@ -5,22 +5,19 @@ import java2scala.ast._
 import java2scala.keywords.TokenType.{TokenType, _}
 import java2scala.keywords._
 
-import scala.collection.mutable
 
-class Parser(var tokens: List[Token]) {
+class Parser private(var tokens: List[Token]) {
 
   var index = 0
-  private val queue: mutable.Queue[Token] = mutable.Queue(tokens: _*)
   var currentToken: Token = _
   var className: String = ""
 
   var counter = 0
   advance()
 
-  def parse(tokens: List[Token]) = {
+  def parse(): CompilationUnit = {
     compilationUnit()
   }
-
 
   private[parser] def advance(): Unit = if (tokens.nonEmpty) {
     currentToken = tokens.head
@@ -83,12 +80,25 @@ class Parser(var tokens: List[Token]) {
       currentToken.isInstanceOf[Modifier]
     },
       classOrIterfaceDelarationModifier)
-    zeroOrOne(() => is(CLASS), () => classDeclaration(modifiers)).get
+    val classDec = zeroOrOne(() => is(CLASS), () => classDeclaration(modifiers))
+    classDec.getOrElse(interfaceDeclaration)
+  }
 
+  private[parser] def interfaceDeclaration(): InterfaceDeclaration = {
+    val name = identifier()
+    eat(LBRACKET)
+    val members = zeroOrMore(() => is(RBRACKET), interfaceMember)
+    InterfaceDeclaration(name, members)
+  }
+
+  private[parser] def interfaceMember(): InterfaceMemberDeclaration = {
+    val name = identifier()
+    val param = formalParameters()
+    InterfaceMemberDeclaration(name, param)
   }
 
   private def classOrIterfaceDelarationModifier() = {
-    val modifers = zeroOrMore(()=> currentToken.isInstanceOf[Modifier],modifier)
+    val modifers = zeroOrMore(() => currentToken.isInstanceOf[Modifier], modifier)
     ClassOrInterfaceModifier(modifers)
   }
 
@@ -99,6 +109,7 @@ class Parser(var tokens: List[Token]) {
       case _: AbstractToken => eat(ABSTRACT)
       case _: PublicToken => eat(PUBLIC)
       case _: FinalToken => eat(FINAL)
+      case _: StaticToken => eat(STATIC)
     }
     node
   }
@@ -226,7 +237,7 @@ classBodyDeclaration
   }
 
   private[parser] def blockStatement(): BlockStatement = {
-    val stmt = zeroOrOne(() => is(FINAL, ID) && !peekToken().is(ASSIGN, LPAREN), localVariableDeclaration)
+    val stmt = zeroOrOne(() => is(FINAL, ID, PRIMITIVE) && !peekToken().is(ASSIGN, LPAREN, DOT), localVariableDeclaration)
       .getOrElse(statement())
     BlockStatement(stmt)
   }
@@ -296,22 +307,14 @@ classBodyDeclaration
     SwitchStatement(condition, groups)
   }
 
-  private[parser] def creator(): Unit = {
+  private[parser] def creator(): Creator = {
     eat(NEW)
     val id = identifier()
-    val parameters = expressionList();
-    eat(SEMICOLON)
+    val parameters = expressionList()
     Creator(id, parameters)
 
   }
 
-  private[parser] def arguments():
-
-  =
-  {
-    eat(LPAREN)
-
-  }
 
   def switchGroup(): SwitchGroup = {
     val label = switchLabel()
@@ -433,8 +436,18 @@ classBodyDeclaration
     currentToken match {
       case _: LiteralToken => primary()
       case l: IdToken => if (peekToken() is LPAREN) methodCall() else identifier()
+      case _: LParenToken => parExpression()
+      case _: NewToken => creator()
+      case _: NotToken => notExp()
       case _ => expression()
     }
+  }
+
+  private[parser] def notExp(): NotExp = {
+    eat(NOT)
+    val exp = expression();
+    NotExp(exp)
+
   }
 
   private[parser] def expression2(): Exp = {
@@ -447,7 +460,13 @@ classBodyDeclaration
       BinOp(exp3, node, expression())
     })
 
-    rest.getOrElse(exp3)
+    val array = zeroOrOne(() => is(STATIC), () => {
+      eat(LBRACE)
+      val exp = expression()
+      eat(RBRACET)
+      ArrayGet(exp3, exp)
+    })
+    rest.orElse(array).getOrElse(exp3)
   }
 
   private[parser] def primary(): Exp = {
@@ -536,13 +555,7 @@ classBodyDeclaration
 
   = {
     val node = currentToken.asInstanceOf[PrimitiveType]
-    node match {
-      case _: BooleanToken => eat(BOOLEAN)
-      case _: IntToken => eat(INT)
-      case _: ShortToken => eat(SHORT)
-      case _: DoubleToken => eat(DOUBLE)
-      case _: CharToken => eat(CHAR)
-    }
+    eat(PRIMITIVE)
     node
   }
 
@@ -598,4 +611,10 @@ qualifiedName
     eat(FINAL)
     node.asInstanceOf[FinalToken]
   }
+
+}
+
+object Parser {
+  def apply(tokens: List[Token]): Parser = new Parser(tokens)
+
 }
