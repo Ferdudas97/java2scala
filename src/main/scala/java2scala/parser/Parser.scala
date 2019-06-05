@@ -1,6 +1,5 @@
 package java2scala.parser
 
-import java2scala.ast
 import java2scala.ast._
 import java2scala.keywords.TokenType.{TokenType, _}
 import java2scala.keywords._
@@ -8,11 +7,9 @@ import java2scala.keywords._
 
 class Parser private(var tokens: List[Token]) {
 
-  var index = 0
   var currentToken: Token = _
   var className: String = ""
 
-  var counter = 0
   advance()
 
   def parse(): CompilationUnit = {
@@ -26,7 +23,7 @@ class Parser private(var tokens: List[Token]) {
 
   private[parser] def eat(typ: TokenType): Unit = if (currentToken is typ)
     advance()
-  else throw new NoSuchElementException(s" token ${currentToken.typ} typ ${typ}")
+  else throw new NoSuchElementException(s" token ${currentToken}  should be ${typ}")
 
   private[parser] def peekToken(i: Int = 0) = tokens(i)
 
@@ -78,7 +75,7 @@ class Parser private(var tokens: List[Token]) {
   private[parser] def interfaceDeclaration(modifiers: List[ClassOrInterfaceModifier]): InterfaceDeclaration = {
     eat(INTERFACE)
     val name = identifier()
-    val interfaces = zeroOrMore(_.is(COLON), () => eat(COLON), _.is(COMMA), classOrInterfaceType)
+    val interfaces = zeroOrMore(_.is(COLON), () => eat(COLON), _.is(COMMA), classOrInterfaceType, COMMA)
     eat(LBRACKET)
     val members = zeroOrMore(!_.is(RBRACKET), interfaceMember)
     InterfaceDeclaration(modifiers, name, members, interfaces)
@@ -92,7 +89,7 @@ class Parser private(var tokens: List[Token]) {
     InterfaceMemberDeclaration(typee, name, param)
   }
 
-  private def classOrIterfaceDelarationModifier() = {
+  private[parser] def classOrIterfaceDelarationModifier() = {
     val modifers = zeroOrMore(_.isInstanceOf[Modifier], modifier)
     ClassOrInterfaceModifier(modifers)
   }
@@ -111,11 +108,11 @@ class Parser private(var tokens: List[Token]) {
   }
 
 
-  private def classDeclaration(modifier: List[ClassOrInterfaceModifier]): ClassDeclaration = {
+  private[parser] def classDeclaration(modifier: List[ClassOrInterfaceModifier]): ClassDeclaration = {
     eat(CLASS)
     val name = identifier()
     className = name.value
-    val interfaces = zeroOrMore(_.is(COLON), () => eat(COLON), _.is(COMMA), classOrInterfaceType)
+    val interfaces = zeroOrMore(_.is(COLON), () => eat(COLON), _.is(COMMA), classOrInterfaceType, COMMA)
     val body = classBody()
     ClassDeclaration(modifier, name, body, interfaces)
   }
@@ -214,7 +211,8 @@ classBodyDeclaration
 
   private[parser] def methodCall(): MethodCall = {
     val name = identifier()
-    val expressions = expressionList()
+    val expressions = oneOrMore(_.is(LPAREN),expressionList)
+
     MethodCall(name, expressions)
   }
 
@@ -233,7 +231,7 @@ classBodyDeclaration
   }
 
   private[parser] def blockStatement(): BlockStatement = {
-    val stmt = zeroOrOne(_.is(FINAL, ID, PRIMITIVE) && !peekToken().is(ASSIGN, LPAREN, DOT), localVariableDeclaration)
+    val stmt = zeroOrOne(t => t.is(FINAL, ID, PRIMITIVE) && !peekToken().is(ASSIGN, LPAREN, DOT), localVariableDeclaration)
       .getOrElse(statement())
     BlockStatement(stmt)
   }
@@ -264,20 +262,16 @@ classBodyDeclaration
   }
 
   private[parser] def variableInitializer(): VariableInitializer = {
-    val node = currentToken
-
-    val initializer = zeroOrOne(_.is(LBRACE), arrayInitializer)
+    val initializer = zeroOrOne(_.is(LBRACKET), arrayInitializer)
 
     initializer.getOrElse(VariableInitializerByExpression(expression()))
   }
 
   private[parser] def arrayInitializer(): ArrayInitializer = {
-    eat(LBRACE)
-    val values = zeroOrOne(!_.is(RBRACET), () => {
-      oneOrMore(_.is(COMMA), () => variableInitializer())
-    })
-    eat(RBRACET)
-    ArrayInitializer(values.getOrElse(List.empty))
+    eat(LBRACKET)
+    val values = zeroOrMore(!_.is(RBRACKET), () => {}, _.is(COMMA), variableInitializer, COMMA)
+    eat(RBRACKET)
+    ArrayInitializer(values)
 
   }
 
@@ -294,7 +288,7 @@ classBodyDeclaration
   }
 
 
-  def switchStatement(): SwitchStatement = {
+  private[parser] def switchStatement(): SwitchStatement = {
     eat(SWITCH)
     val condition = parExpression()
     eat(LBRACKET)
@@ -312,14 +306,14 @@ classBodyDeclaration
   }
 
 
-  def switchGroup(): SwitchGroup = {
+  private[parser] def switchGroup(): SwitchGroup = {
     val label = switchLabel()
     val stmt = blockStatement()
     eat(SEMICOLON)
     SwitchGroup(label, stmt)
   }
 
-  def switchLabel(): SwitchLabel = {
+  private[parser] def switchLabel(): SwitchLabel = {
     val exp = zeroOrOne(_.is(CASE), () => {
       eat(CASE)
       val exp = expression()
@@ -332,26 +326,26 @@ classBodyDeclaration
     }
   }
 
-  def whileStatement(): WhileStatement = {
+  private[parser] def whileStatement(): WhileStatement = {
     eat(WHILE)
     val condition = parExpression()
     val stmt = statement()
     WhileStatement(condition, stmt)
   }
 
-  def breakStatement(): BreakStatement = {
+  private[parser] def breakStatement(): BreakStatement = {
     eat(BREAK)
     eat(SEMICOLON)
     BreakStatement()
   }
 
-  def returnStatement(): ReturnStatement = {
+  private[parser] def returnStatement(): ReturnStatement = {
     eat(RETURN)
     val exp = expression()
     ReturnStatement(exp)
   }
 
-  def forStatement(): ForStatement = {
+  private[parser] def forStatement(): ForStatement = {
     eat(FOR)
     eat(LPAREN)
     val control = forControl()
@@ -360,7 +354,7 @@ classBodyDeclaration
     ForStatement(control, blockStmt)
   }
 
-  def forControl(): ForControl = {
+  private[parser] def forControl(): ForControl = {
     val init = forInit()
     val condition = expression()
     eat(SEMICOLON)
@@ -368,14 +362,14 @@ classBodyDeclaration
     ForControl(init, condition, update)
   }
 
-  def forInit(): ForInit = {
+  private[parser] def forInit(): ForInit = {
     val dec = localVariableDeclaration()
     ForInit(dec)
   }
 
   private[parser] def statement(): Stmt = {
     val node = currentToken
-    node match {
+     node match {
       case _: LBracketToken => block()
       case _: IfToken => ifStatement()
       case _: SwitchToken => switchStatement()
@@ -384,7 +378,7 @@ classBodyDeclaration
       case _: BreakToken => breakStatement()
       case _: ReturnToken => returnStatement()
       case s: SemicolonToken => eat(SEMICOLON); s
-      case _ => expression()
+      case _ => val e = expression(); eat(SEMICOLON); e
     }
   }
 
@@ -393,7 +387,7 @@ classBodyDeclaration
     val condition = parExpression()
     val stm = statement()
     val elseStmt = zeroOrOne(_.is(ELSE), () => {
-      eat(ELSE);
+      eat(ELSE)
       statement()
     })
     IfStatement(condition, stm, elseStmt)
@@ -415,7 +409,6 @@ classBodyDeclaration
   //
   //  }
   private[parser] def expression(): Exp = {
-    val node = currentToken
     val exp = expression2()
     val ass = zeroOrOne(_.is(ASSIGN), () => {
       eat(ASSIGN)
@@ -441,14 +434,13 @@ classBodyDeclaration
 
   private[parser] def notExp(): NotExp = {
     eat(NOT)
-    val exp = expression();
+    val exp = expression()
     NotExp(exp)
 
   }
 
   private[parser] def expression2(): Exp = {
     val exp3 = expression3()
-    val node = currentToken
 
     val rest = zeroOrOne(_.isInstanceOf[BinOpToken], () => {
       val node = currentToken.asInstanceOf[BinOpToken]
@@ -456,7 +448,7 @@ classBodyDeclaration
       BinOp(exp3, node, expression())
     })
 
-    val array = zeroOrOne(_.is(STATIC), () => {
+    val array = zeroOrOne(_.is(LBRACE), () => {
       eat(LBRACE)
       val exp = expression()
       eat(RBRACET)
@@ -466,9 +458,9 @@ classBodyDeclaration
   }
 
   private[parser] def primary(): Exp = {
-    val node = currentToken;
+    val node = currentToken
     node match {
-      case l: LParenToken => parExpression()
+      case _: LParenToken => parExpression()
       case _ => literal()
     }
   }
@@ -573,26 +565,31 @@ qualifiedName
     QualifiedName(names)
   }
 
-  private[parser] def zeroOrMore[Type](condition: Token => Boolean, parseFunction: () => Type): List[Type]
+  private def zeroOrMore[Type](condition: Token => Boolean, parseFunction: () => Type): List[Type]
 
   = {
     if (condition(currentToken)) parseFunction() :: zeroOrMore(condition, parseFunction) else Nil
 
   }
 
-  private[parser] def zeroOrMore[Type](startCondition: Token => Boolean, eatFirst: () => Unit, separatorCondition: Token => Boolean, parseFunction: () => Type): List[Type]
+  private def zeroOrMore[Type](startCondition: Token => Boolean, eatFirst: () => Unit, separatorCondition: Token => Boolean,
+                               parseFunction: () => Type,
+                               eatSeparator: TokenType): List[Type]
 
   = {
-    zeroOrOne(startCondition, eatFirst).map(_ => parseFunction()).map(value => value :: zeroOrMore(separatorCondition, parseFunction))
+    zeroOrOne(startCondition, eatFirst).map(_ => parseFunction()).map(value => value :: zeroOrMore(separatorCondition, () => {
+      eat(eatSeparator)
+      parseFunction()
+    }))
       .getOrElse(List.empty)
   }
 
-  private[parser] def oneOrMore[Type](condition: Token => Boolean, parseFunction: () => Type): List[Type] = {
+  private def oneOrMore[Type](condition: Token => Boolean, parseFunction: () => Type): List[Type] = {
 
     parseFunction() :: zeroOrMore(condition, parseFunction)
   }
 
-  private[parser] def zeroOrOne[Type](condition: Token => Boolean, parseFunction: () => Type): Option[Type]
+  private def zeroOrOne[Type](condition: Token => Boolean, parseFunction: () => Type): Option[Type]
 
   = {
     if (condition(currentToken)) Option(parseFunction()) else None

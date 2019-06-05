@@ -1,6 +1,5 @@
 package java2scala.ast
 
-import java2scala.keywords.{FinalToken, IdToken}
 
 trait Stmt extends Node
 

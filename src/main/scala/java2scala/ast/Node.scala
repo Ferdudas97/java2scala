@@ -20,9 +20,9 @@ case class QualifiedName(name: List[IdToken]) extends Node
 
 sealed trait TypeDeclaration extends Node
 
-case class ClassDeclaration(modifier: List[ClassOrInterfaceModifier], name: IdToken, body: List[ClassMemberDeclaration], parents : List[ClassOrInterfaceType]) extends TypeDeclaration
+case class ClassDeclaration(modifier: List[ClassOrInterfaceModifier], name: IdToken, body: List[ClassMemberDeclaration], parents: List[ClassOrInterfaceType]) extends TypeDeclaration
 
-case class InterfaceDeclaration(modifier: List[ClassOrInterfaceModifier], name: IdToken, body: List[InterfaceMemberDeclaration], parents : List[ClassOrInterfaceType]) extends TypeDeclaration
+case class InterfaceDeclaration(modifier: List[ClassOrInterfaceModifier], name: IdToken, body: List[InterfaceMemberDeclaration], parents: List[ClassOrInterfaceType]) extends TypeDeclaration
 
 case class InterfaceMemberDeclaration(typeType: TypeType, name: IdToken, formalParameter: FormalParameters)
 

@@ -14,24 +14,25 @@ object Visitator {
     s"$package_ \n$imports \n$type_"
 
   }
-  def visit(declarations: ImportDeclarations): String = {
+
+  private def visit(declarations: ImportDeclarations): String = {
     declarations.importList.map(i => i.qualifiedName.name)
       .map(ids => ids.map(p => p.value).mkString("import ", ".", ""))
       .mkString("\n")
   }
 
-  def visit(declaration: PackageDeclaration): String = {
+  private def visit(declaration: PackageDeclaration): String = {
     declaration.qualifiedName.name.map(p => p.value).mkString("package ", ".", "\n")
   }
 
-  def visit(declaration: TypeDeclaration): String = {
+  private def visit(declaration: TypeDeclaration): String = {
     declaration match {
       case clazz: ClassDeclaration => visitClass(clazz)
       case i: InterfaceDeclaration => visitInterface(i)
     }
   }
 
-  def visitInterface(declaration: InterfaceDeclaration): String = {
+  private def visitInterface(declaration: InterfaceDeclaration): String = {
 
     val modifier = declaration.modifier.map(visit).mkString(" ")
     val name = visit(declaration.name)
@@ -40,27 +41,28 @@ object Visitator {
     s"$modifier trait $name $parents $body"
   }
 
-  def visit(declaration: InterfaceMemberDeclaration): String = {
+  private def visit(declaration: InterfaceMemberDeclaration): String = {
     val typeType = visit(declaration.typeType)
     val name = declaration.name.value
     val parameters = visit(declaration.formalParameter)
     s"def $name $parameters $typeType"
   }
 
-  def visitClass(declaration: ClassDeclaration): String = {
+  private def visitClass(declaration: ClassDeclaration): String = {
     val modifier = declaration.modifier.map(visit).mkString(" ")
     val name = visit(declaration.name)
     val parents = declaration.parents.map(visit).mkString("extends ", " with ", "")
-    val nonstaticBody = declaration.body.filter(p => !p.modifier.modifier.contains(StaticToken())).map(visit).mkString("{\n", "\n", "}")
-    val staticBody = declaration.body.filter(p => p.modifier.modifier.contains(StaticToken())).map(visit).mkString("{\n", "\n", "}")
+    val nonstaticBody = declaration.body.filter(p => !p.modifier.modifier.contains(StaticToken())).map(visit).mkString("{\n\t", "\n\t", "\t}")
+    val staticBody = declaration.body.filter(p => p.modifier.modifier.contains(StaticToken())).map(visit).mkString("{\n\t", "\n\t", "\t}")
 
-    s"""$modifier class $name $parents $nonstaticBody
-       |object $name $staticBody
+    s"""$modifier class $name $parents
+       |  \t$nonstaticBody
+       |  \tobject $name $staticBody
      """.stripMargin
   }
 
 
-  def visit(memberDeclaration: ClassMemberDeclaration): String = {
+  private def visit(memberDeclaration: ClassMemberDeclaration): String = {
     memberDeclaration match {
       case f: FieldDeclaration => visitField(f)
       case m: MethodDeclaration => visitMethod(m)
@@ -68,31 +70,34 @@ object Visitator {
     }
   }
 
-  def visitMethod(m: MethodDeclaration): String = {
+  private def visitMethod(m: MethodDeclaration): String = {
     val modifier = visit(m.modifier)
     val typeType = visit(m.typeType)
     val name = visit(m.name)
     val parameters = visit(m.formalParameters)
     val body = visit(m.body)
-    s"$modifier def $name$parameters $typeType = {\n $body \n}"
+
+    s"""$modifier def $name$parameters $typeType = {
+       |  $body
+       |  }""".stripMargin
   }
 
 
-  def visit(body: MethodBody): String = {
+  private def visit(body: MethodBody): String = {
     visit(body.block)
   }
 
 
-  def visit(block: Block): String = block.blockStatement.map(visit).mkString("\n")
+  private def visit(block: Block): String = block.blockStatement.map(visit).mkString("\n")
 
-  def visit(blockStatement: BlockStatement): String = {
+  private def visit(blockStatement: BlockStatement): String = {
     blockStatement.stmt match {
       case l: LocalVariableDeclaration => visit(l)
       case f: Stmt => visitStmt(f)
     }
   }
 
-  def visitStmt(stmt: Stmt): String = {
+  private def visitStmt(stmt: Stmt): String = {
     stmt match {
       case f: ForStatement => visit(f)
       case r: ReturnStatement => s"return ${visit(r.exp)}"
@@ -108,39 +113,48 @@ object Visitator {
   }
 
 
-  def visit(statement: WhileStatement): String = {
+  private def visit(statement: WhileStatement): String = {
     val condition = visit(statement.condition)
     val firststmt = visitStmt(statement.stmt)
-    s"while ($condition) {\n$firststmt\n}\n"
+    s"""while ($condition) {
+       | $firststmt
+       |  }
+       |""".stripMargin
   }
 
-  def visit(statement: IfStatement): String = {
+  private def visit(statement: IfStatement): String = {
     val condition = visit(statement.condition)
     val firststmt = visitStmt(statement.stmt)
     val elseStmt = statement.elseStmt.map(visitStmt)
-    s"if ($condition) {\n$firststmt\n}\n" + elseStmt.map(s => s"else {\n$s\n}").getOrElse("")
+    s"if ($condition) {\n\t$firststmt\n\t}\n" + elseStmt.map(s => s"else {\n$s\n}").getOrElse("")
   }
 
-  def visit(statement: SwitchStatement): String = {
-    s"${visit(statement.condition)} match {\n ${visit(statement.switchGroups)} }\n"
+  private def visit(statement: SwitchStatement): String = {
+
+    s""""${visit(statement.condition)} match {
+       |  ${visit(statement.switchGroups)}
+       |  }""".stripMargin
   }
 
-  def visit(groups: List[SwitchGroup]): String = {
+  private def visit(groups: List[SwitchGroup]): String = {
     groups.map(visit).mkString("\n")
   }
 
-  def visit(switchGroup: SwitchGroup): String = {
+  private def visit(switchGroup: SwitchGroup): String = {
     val label = visit(switchGroup.switchLabel)
     val statement = visit(switchGroup.blockStatement)
-    s"case $label  => { \n $statement }"
+    s"""case $label  =>
+       |  {
+       |    $statement
+       |  }""".stripMargin
   }
 
-  def visit(label: SwitchLabel): String = {
+  private def visit(label: SwitchLabel): String = {
     label.condition.map(visit).getOrElse("_")
   }
 
 
-  def visit(forStatement: ForStatement): String = {
+  private def visit(forStatement: ForStatement): String = {
     val declaration = visit(forStatement.forControl.init.localVariableDeclaration)
     val condition = visit(forStatement.forControl.exp)
     val block = visit(forStatement.block)
@@ -157,14 +171,17 @@ object Visitator {
   }
 
 
-  def visitConstructor(declaration: ConstructorDeclaration): String = {
+  private def visitConstructor(declaration: ConstructorDeclaration): String = {
     val modifier = visit(declaration.modifier)
     val parameters = visit(declaration.parameters)
     val body = visit(declaration.block)
-    s"$modifier def this$parameters = {\n this()\n $body } "
+    s"""$modifier def this$parameters = {
+       |  this()
+       |  $body
+       |  } """.stripMargin
   }
 
-  def visit(declaration: LocalVariableDeclaration): String = {
+  private def visit(declaration: LocalVariableDeclaration): String = {
     val modifier = if (declaration.isFinal) "val" else "var"
     val names = declaration.declaratorList
       .map(d => d.variableDeclaratorId.idToken)
@@ -181,15 +198,15 @@ object Visitator {
     }
   }
 
-  def visit(parameters: FormalParameters): String = {
+  private def visit(parameters: FormalParameters): String = {
     parameters.parameters.map(visit).mkString("(", ", ", ")")
   }
 
-  def visit(parameter: FormalParameter): String = {
+  private def visit(parameter: FormalParameter): String = {
     parameter.name.value + visit(parameter.typ)
   }
 
-  def visitField(fieldDeclaration: FieldDeclaration): String = {
+  private def visitField(fieldDeclaration: FieldDeclaration): String = {
     val common = visitField(fieldDeclaration.modifier) +
       fieldDeclaration.declarators
         .map(d => d.variableDeclaratorId.idToken)
@@ -205,7 +222,7 @@ object Visitator {
   }
 
 
-  def visit(initializer: Option[VariableInitializer]): String = {
+  private def visit(initializer: Option[VariableInitializer]): String = {
     val matcher: VariableInitializer => String = {
       case a: ArrayInitializer => visit(a)
       case e: VariableInitializerByExpression => visit(e)
@@ -213,9 +230,9 @@ object Visitator {
     initializer.map(matcher).getOrElse("_")
   }
 
-  def visit(variableInitializerByExpression: VariableInitializerByExpression): String = visit(variableInitializerByExpression.exp)
+  private def visit(variableInitializerByExpression: VariableInitializerByExpression): String = visit(variableInitializerByExpression.exp)
 
-  def visit(exp: Exp): String = {
+  private def visit(exp: Exp): String = {
     exp match {
       case a: ArrayGet => s"${visit(a.exp1)}({visit(a.exp1)})"
       case p: ParExp => s"(${visit(p.exp)})"
@@ -229,11 +246,11 @@ object Visitator {
     }
   }
 
-  def visit(creator: Creator): String = {
+  private def visit(creator: Creator): String = {
     s"new ${creator.idToken.value} ${visit(creator.expressionList)}"
   }
 
-  def visit(op: BinOp): String = {
+  private def visit(op: BinOp): String = {
     op.token match {
       case _: AndToken => s"${visit(op.left)} || ${visit(op.right)}"
       case _: AndToken => s"${visit(op.left)} && ${visit(op.right)}"
@@ -243,15 +260,15 @@ object Visitator {
 
   }
 
-  def visit(methodCall: MethodCall): String = {
-    methodCall.name.value + visit(methodCall.expressionList)
+  private def visit(methodCall: MethodCall): String = {
+    methodCall.name.value + methodCall.expressionList.map(visit).mkString("")
   }
 
-  def visit(expressionList: ExpressionList): String = {
+  private def visit(expressionList: ExpressionList): String = {
     expressionList.exps.map(visit).mkString("(", ", ", ")")
   }
 
-  def visit(l: Literal): String = {
+  private def visit(l: Literal): String = {
     l match {
       case s: StringLiteral => s.value
       case b: BooleanLiteral => b.boolean.toString
@@ -261,16 +278,16 @@ object Visitator {
     }
   }
 
-  def visit(arrayInitializer: ArrayInitializer): String = {
+  private def visit(arrayInitializer: ArrayInitializer): String = {
     val values = arrayInitializer.values.map(Option(_)).map(visit).mkString(", ")
     s"Array($values)"
   }
 
-  def visit(variableDeclarator: VariableDeclarator): String = {
+  private def visit(variableDeclarator: VariableDeclarator): String = {
     variableDeclarator.variableDeclaratorId.idToken.value
   }
 
-  def visit(typeType: TypeType): String = {
+  private def visit(typeType: TypeType): String = {
 
     val typ = visit(typeType.typ)
 
@@ -279,9 +296,9 @@ object Visitator {
     s": ${toArray(typeType.braceNumber, typ)} "
   }
 
-  def visit(typ: Type): String = {
+  private def visit(typ: Type): String = {
     typ match {
-      case t: IntToken => "Int "
+      case _: IntToken => "Int "
       case _: BooleanToken => "Boolean "
       case _: DoubleToken => "Double "
       case _: ShortToken => "Short "
@@ -294,14 +311,14 @@ object Visitator {
     }
   }
 
-  def visit(idToken: IdToken) = idToken.value + " "
+  private def visit(idToken: IdToken) = idToken.value + " "
 
-  def visit(declaration: ClassOrInterfaceModifier): String = {
+  private def visit(declaration: ClassOrInterfaceModifier): String = {
     declaration.modifier.map(visitMethodOrClassModifier).mkString(" ")
   }
 
-  def visitMethodOrClassModifier(modifier: Modifier) = modifier match {
-    case mod: PrivateToken => "private"
+  private def visitMethodOrClassModifier(modifier: Modifier) = modifier match {
+    case _: PrivateToken => "private"
     case _: PublicToken => ""
     case _: AbstractToken => "abstract"
     case _: FinalToken => "final"
@@ -311,7 +328,7 @@ object Visitator {
 
   }
 
-  def visitField(declaration: ClassOrInterfaceModifier): String = {
+  private def visitField(declaration: ClassOrInterfaceModifier): String = {
     val modifiers = declaration.modifier.map(visitFieldModifier).mkString(" ")
     if (modifiers.contains("val")) {
       val modified = modifiers.replace("val", "")
@@ -322,8 +339,8 @@ object Visitator {
     }
   }
 
-  def visitFieldModifier(modifier: Modifier) = modifier match {
-    case mod: PrivateToken => "private"
+  private def visitFieldModifier(modifier: Modifier) = modifier match {
+    case _: PrivateToken => "private"
     case _: PublicToken => ""
     case _: AbstractToken => "abstract"
     case _: FinalToken => "val"

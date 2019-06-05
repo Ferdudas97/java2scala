@@ -80,7 +80,7 @@ object TokenType extends Enumeration {
   LBRACE,
   RBRACET,
   LBRACKET,
-  RBRACKET = Value;
+  RBRACKET = Value
 
 }
 
