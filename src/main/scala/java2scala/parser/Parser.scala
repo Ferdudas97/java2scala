@@ -103,6 +103,7 @@ class Parser private(var tokens: List[Token]) {
       case _: FinalToken => eat(FINAL)
       case _: StaticToken => eat(STATIC)
       case _: OverrideToken => eat(OVERRIDE)
+      case _: ProtectedToken => eat(PROTECTED)
     }
     node
   }
@@ -424,10 +425,11 @@ classBodyDeclaration
   private[parser] def expression3(): Exp = {
     currentToken match {
       case _: LiteralToken => primary()
-      case l: IdToken => if (peekToken() is LPAREN) methodCall() else identifier()
+      case _: IdToken => if (peekToken() is LPAREN) methodCall() else identifier()
       case _: LParenToken => parExpression()
       case _: NewToken => creator()
       case _: NotToken => notExp()
+      case _: ThisToken => eat(THIS); IdToken("this")
       case _ => expression()
     }
   }

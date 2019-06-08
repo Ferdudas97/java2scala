@@ -9,7 +9,7 @@ import java2scala.parser.Parser
 
 import scala.io.Source
 
-object CodeGenerator extends Observable {
+object RavaCompiler{
 
   val fileExtension = ".rava"
 

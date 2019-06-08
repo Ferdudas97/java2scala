@@ -12,13 +12,13 @@ class GeneratorTest extends FlatSpec with Matchers {
     val parser = Parser(tokens).parse()
 
     val scala = Visitator.visit(parser)
-    CodeGenerator.generate(scala, "/home/radek/IdeaProjects/java2scala/src/test/scala/java2scala/in/TestClass1Sc.scala")
+    RavaCompiler.generate(scala, "/home/radek/IdeaProjects/java2scala/src/test/scala/java2scala/in/TestClass1Sc.scala")
     scala.replaceAll("\\s+", " ") shouldBe expected.replaceAll("\\s+", " ")
   }
 
 
   def compile(path: String): Unit = {
-    CodeGenerator.files(path)
+    RavaCompiler.files(path)
   }
 
     behave like compile("/home/radek/IdeaProjects/java2scala/src/test/scala/java2scala/in")

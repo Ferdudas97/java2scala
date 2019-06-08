@@ -252,7 +252,7 @@ object Visitator {
 
   private def visit(op: BinOp): String = {
     op.token match {
-      case _: AndToken => s"${visit(op.left)} || ${visit(op.right)}"
+      case _: OrToken => s"${visit(op.left)} || ${visit(op.right)}"
       case _: AndToken => s"${visit(op.left)} && ${visit(op.right)}"
       case _: DotToken => s"${visit(op.left)}.${visit(op.right)}"
       case _ => s"${visit(op.left)} ${op.token.value} ${visit(op.right)}"
@@ -346,6 +346,7 @@ object Visitator {
     case _: FinalToken => "val"
     case _: ProtectedToken => "protected"
     case _: StaticToken => ""
+    case _ => ""
   }
 
 }
