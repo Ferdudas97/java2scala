@@ -12,7 +12,7 @@ importDeclaration
 
 typeDeclaration
     : classOrInterfaceModifier*
-      (classDeclaration | enumDeclaration | interfaceDeclaration)
+      (classDeclaration | interfaceDeclaration)
     | ';'
     ;
 
@@ -40,21 +40,6 @@ classDeclaration
       classBody
     ;
 
-enumDeclaration
-    : ENUM IDENTIFIER (IMPLEMENTS typeList)? '{' enumConstants? ','? enumBodyDeclarations? '}'
-    ;
-
-enumConstants
-    : enumConstant (',' enumConstant)*
-    ;
-
-enumConstant
-    : annotation* IDENTIFIER arguments? classBody?
-    ;
-
-enumBodyDeclarations
-    : ';' classBodyDeclaration*
-    ;
 
 interfaceDeclaration
     : INTERFACE IDENTIFIER  (EXTENDS typeList)? interfaceBody
@@ -77,9 +62,6 @@ memberDeclaration
     : methodDeclaration
     | fieldDeclaration
     | constructorDeclaration
-    | interfaceDeclaration
-    | classDeclaration
-    | enumDeclaration
     ;
 
 methodDeclaration
@@ -111,30 +93,11 @@ interfaceBodyDeclaration
     ;
 
 interfaceMemberDeclaration
-    : constDeclaration
-    | interfaceMethodDeclaration
-    | interfaceDeclaration
-    | annotationTypeDeclaration
-    | classDeclaration
-    | enumDeclaration
+    :  interfaceMethodDeclaration
     ;
-
-constDeclaration
-    : typeType constantDeclarator (',' constantDeclarator)* ';'
-    ;
-
-constantDeclarator
-    : IDENTIFIER ('[' ']')* '=' variableInitializer
-    ;
-
 
 interfaceMethodDeclaration
-    : interfaceMethodModifier* (typeTypeOrVoid typeTypeOrVoid)
-      IDENTIFIER formalParameters ('[' ']')* (THROWS qualifiedNameList)? methodBody
-    ;
-
-interfaceMethodModifier
-    :  PUBLIC
+    : IDENTIFIER formalParameters
     ;
 
 variableDeclarators
@@ -162,11 +125,6 @@ classOrInterfaceType
     : IDENTIFIER  ('.' IDENTIFIER )*
     ;
 
-typeArgument
-    : typeType
-    | '?' ((EXTENDS | SUPER) typeType)?
-    ;
-
 qualifiedNameList
     : qualifiedName (',' qualifiedName)*
     ;
@@ -176,17 +134,13 @@ formalParameters
     ;
 
 formalParameterList
-    : formalParameter (',' formalParameter)* (',' lastFormalParameter)?
-    | lastFormalParameter
+    : formalParameter (',' formalParameter)*
     ;
 
 formalParameter
     : variableModifier* typeType variableDeclaratorId
     ;
 
-lastFormalParameter
-    : variableModifier* typeType '...' variableDeclaratorId
-    ;
 
 qualifiedName
     : IDENTIFIER ('.' IDENTIFIER)*
@@ -226,48 +180,16 @@ localVariableDeclaration
     : variableModifier* typeType variableDeclarators
     ;
 
-localTypeDeclaration
-    : classOrInterfaceModifier*
-      (classDeclaration | interfaceDeclaration)
-    | ';'
-    ;
 
 statement
     : IF parExpression statement (ELSE statement)?
     | FOR '(' forControl ')' statement
     | WHILE parExpression statement
-    | DO statement WHILE parExpression ';'
-    | TRY block (catchClause+)
-    | TRY resourceSpecification block catchClause*
     | SWITCH parExpression '{' switchBlockStatementGroup* switchLabel* '}'
     | parExpression block
     | RETURN expression? ';'
-    | THROW expression ';'
-    | BREAK IDENTIFIER? ';'
-    | CONTINUE IDENTIFIER? ';'
     | SEMI
     | statementExpression=expression ';'
-    ;
-
-catchClause
-    : CATCH '(' variableModifier* catchType IDENTIFIER ')' block
-    ;
-
-catchType
-    : qualifiedName ('|' qualifiedName)*
-    ;
-
-
-resourceSpecification
-    : '(' resources ';'? ')'
-    ;
-
-resources
-    : resource (';' resource)*
-    ;
-
-resource
-    : variableModifier* classOrInterfaceType variableDeclaratorId '=' expression
     ;
 
 
@@ -281,17 +203,12 @@ switchLabel
     ;
 
 forControl
-    : enhancedForControl
-    | forInit? ';' expression? ';' forUpdate=expressionList?
+    : forInit? ';' expression? ';' forUpdate=expressionList?
     ;
 
 forInit
     : localVariableDeclaration
     | expressionList
-    ;
-
-enhancedForControl
-    : variableModifier* typeType variableDeclaratorId ':' expression
     ;
 
 // EXPRESSIONS
@@ -315,9 +232,7 @@ expression
     | expression bop='.'
       ( IDENTIFIER
       | methodCall
-      | THIS
       | NEW innerCreator
-      | SUPER superSuffix
       )
     | expression '[' expression ']'
     | methodCall
@@ -329,7 +244,6 @@ expression
     | expression bop=('+'|'-') expression
     | expression ('<' '<' | '>' '>' '>' | '>' '>') expression
     | expression bop=('<=' | '>=' | '>' | '<') expression
-    | expression bop=INSTANCEOF typeType
     | expression bop=('==' | '!=') expression
     | expression bop='^' expression
     | expression bop = (AND) expression
@@ -338,40 +252,8 @@ expression
 primary
     : '(' expression ')'
     | THIS
-    | SUPER
     | literal
     | IDENTIFIER
-    | typeTypeOrVoid '.' CLASS
-    ;
-
-classType
-    : (classOrInterfaceType '.')?  IDENTIFIER typeArguments?
-    ;
-
-creator
-    : createdName classCreatorRest
-    | createdName (arrayCreatorRest | classCreatorRest)
-    ;
-
-createdName
-    : IDENTIFIER  ('.' IDENTIFIER)*
-    | primitiveType
-    ;
-
-innerCreator
-    : IDENTIFIER  classCreatorRest
-    ;
-
-arrayCreatorRest
-    : '[' (']' ('[' ']')* arrayInitializer | expression ']' ('[' expression ']')* ('[' ']')*)
-    ;
-
-classCreatorRest
-    : arguments classBody?
-    ;
-
-typeList
-    : typeType (',' typeType)*
     ;
 
 typeType
@@ -388,13 +270,6 @@ primitiveType
     | FLOAT
     | DOUBLE
     ;
-
-
-superSuffix
-    : arguments
-    | '.' IDENTIFIER arguments?
-    ;
-
 
 arguments
     : '(' expressionList? ')'

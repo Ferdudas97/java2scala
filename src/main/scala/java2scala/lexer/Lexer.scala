@@ -33,7 +33,6 @@ object Lexer{
 
   private def parseChar(text: String): Option[Token] = {
     if (text.length == 0) None else {
-      val char = text.charAt(0)
       val token = text.charAt(0) match {
         case ';' => SemicolonToken()
         case ':' => ColonToken()
